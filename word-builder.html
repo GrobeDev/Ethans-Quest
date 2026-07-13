@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Word Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#8ecae6;
+    --sky-2:#bfe3f0;
+    --grass:#5aa832;
+    --grass-dark:#3f7d22;
+    --earth:#7a5230;
+    --earth-dark:#5b3d22;
+    --panel:#f6edd8;
+    --panel-line:#e4d5b0;
+    --ink:#33291c;
+    --gold:#f2c14e;
+    --gold-dark:#c9922b;
+    --stone:#8a8a8a;
+    --stone-dark:#666;
+    --error:#c94b3b;
+    --error-dark:#9a3527;
+    --display:'Press Start 2P', 'Courier New', monospace;
+    --body:-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    font-family:var(--body);
+    color:var(--ink);
+    background:linear-gradient(var(--sky-2), var(--sky));
+    min-height:100%;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* blocky ground strip at the very bottom of the world */
+  .ground{
+    position:fixed; left:0; right:0; bottom:0; height:46px; z-index:0;
+    background:
+      repeating-linear-gradient(90deg, var(--earth) 0 46px, var(--earth-dark) 46px 92px);
+    border-top:10px solid var(--grass);
+    box-shadow:inset 0 10px 0 var(--grass-dark);
+  }
+  .cloud{position:fixed; z-index:0; background:#fff; opacity:.75;
+    border-radius:8px; box-shadow:0 8px 0 rgba(0,0,0,.05);}
+  .cloud::before,.cloud::after{content:""; position:absolute; background:#fff; border-radius:8px;}
+  .c1{width:70px;height:22px; top:8%; left:8%;}
+  .c1::before{width:34px;height:34px; top:-16px; left:12px;}
+  .c1::after{width:24px;height:24px; top:-10px; left:40px;}
+  .c2{width:54px;height:18px; top:16%; right:10%;}
+  .c2::before{width:26px;height:26px; top:-12px; left:8px;}
+  .c2::after{width:20px;height:20px; top:-8px; left:30px;}
+
+  .app{
+    position:relative; z-index:1;
+    max-width:640px; margin:0 auto;
+    padding:20px 16px 80px;
+    min-height:100%;
+    display:flex; flex-direction:column;
+  }
+
+  .screen{display:none; animation:fade .25s ease both;}
+  .screen.active{display:flex; flex-direction:column; flex:1;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  /* ---- shared block button ---- */
+  .btn{
+    font-family:var(--body);
+    font-weight:800;
+    font-size:19px;
+    color:#fff;
+    background:var(--grass);
+    border:none;
+    border-radius:8px;
+    padding:16px 22px;
+    cursor:pointer;
+    box-shadow:0 6px 0 var(--grass-dark);
+    transition:transform .06s ease, box-shadow .06s ease, filter .1s;
+    -webkit-user-select:none; user-select:none;
+    letter-spacing:.3px;
+    touch-action:manipulation;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--grass-dark);}
+  .btn:focus-visible{outline:4px solid #1b3a5c; outline-offset:3px;}
+  .btn.earth{background:var(--earth); box-shadow:0 6px 0 var(--earth-dark);}
+  .btn.earth:active{box-shadow:0 2px 0 var(--earth-dark);}
+  .btn.stone{background:var(--stone); box-shadow:0 6px 0 var(--stone-dark);}
+  .btn.stone:active{box-shadow:0 2px 0 var(--stone-dark);}
+  .btn.gold{background:var(--gold); color:var(--ink); box-shadow:0 6px 0 var(--gold-dark);}
+  .btn.gold:active{box-shadow:0 2px 0 var(--gold-dark);}
+  .btn:disabled{filter:grayscale(.5) opacity(.55); cursor:default; transform:none;}
+  .btn:disabled:active{transform:none; box-shadow:0 6px 0 var(--grass-dark);}
+
+  /* ---- top bar / progress ---- */
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .level-badge{
+    font-family:var(--display); font-size:12px; color:#fff;
+    background:var(--earth); border-radius:6px; padding:10px 12px;
+    box-shadow:0 4px 0 var(--earth-dark);
+  }
+  .home-link{
+    font-family:var(--body); font-weight:800; font-size:14px; color:var(--ink);
+    background:var(--panel); border:2px solid var(--panel-line); border-radius:8px;
+    padding:9px 12px; cursor:pointer;
+  }
+  .home-link:active{transform:translateY(2px);}
+  .pips{display:flex; gap:7px;}
+  .pip{width:20px; height:20px; border-radius:4px; background:rgba(255,255,255,.55);
+    border:2px solid rgba(51,41,28,.25);}
+  .pip.done{background:var(--gold); border-color:var(--gold-dark);
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,.12);}
+  .pip.current{border-color:#1b3a5c; box-shadow:0 0 0 3px rgba(27,58,92,.25);}
+
+  /* ---- HOME ---- */
+  .home-inner{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:22px;}
+  .title{
+    font-family:var(--display); line-height:1.4;
+    font-size:30px; color:#fff;
+    text-shadow:4px 4px 0 var(--grass-dark), 8px 8px 0 rgba(0,0,0,.12);
+    margin:0;
+  }
+  .title span{color:var(--gold); text-shadow:4px 4px 0 var(--gold-dark);}
+  .tagline{font-size:18px; font-weight:600; max-width:360px; color:var(--ink); margin:0; opacity:.9;}
+  .level-map{display:flex; gap:12px; margin-top:4px;}
+  .map-block{
+    width:52px; height:52px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--display); font-size:13px; color:#fff;
+    background:var(--stone); box-shadow:0 5px 0 var(--stone-dark);
+  }
+  .map-block.done{background:var(--gold); color:var(--ink); box-shadow:0 5px 0 var(--gold-dark);}
+  .btn-start{font-size:22px; padding:20px 46px; font-family:var(--body);}
+  .voice-setup{
+    margin-top:14px; padding:14px 16px; border-radius:10px;
+    background:rgba(255,255,255,.5); border:2px solid rgba(51,41,28,.12);
+    display:flex; flex-direction:column; gap:8px; align-items:center; max-width:340px;
+  }
+  .voice-setup label{font-size:13px; font-weight:800; letter-spacing:.3px; color:var(--earth); text-transform:uppercase;}
+  .voice-row{display:flex; gap:8px; width:100%;}
+  .voice-setup select{
+    flex:1; min-width:0; font-family:var(--body); font-size:15px; font-weight:600; color:var(--ink);
+    padding:10px 12px; border-radius:8px; border:2px solid var(--panel-line); background:var(--panel);
+  }
+  .voice-setup .btn{padding:10px 16px; font-size:15px;}
+
+  /* ---- SPELLING ---- */
+  .prompt{text-align:center; font-size:17px; font-weight:700; opacity:.85; margin:6px 0 16px;}
+  .tools{display:flex; justify-content:center; gap:14px; margin-bottom:22px; flex-wrap:wrap;}
+  .tools .btn{display:flex; align-items:center; gap:10px; font-size:18px;}
+  .speaker-ico{font-size:22px; line-height:1;}
+  .slots{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; min-height:88px;}
+  .slot{
+    width:68px; height:86px; border-radius:10px;
+    background:var(--panel); border:4px solid var(--panel-line);
+    display:flex; align-items:flex-end; justify-content:center;
+    font-size:48px; font-weight:800; color:var(--ink);
+    padding-bottom:6px;
+  }
+  .slot.filled{background:#fff; border-color:var(--grass); border-bottom-width:8px;}
+  .slots.correct .slot{background:#e7f6dc; border-color:var(--grass); animation:pop .3s ease;}
+  .slots.wrong .slot{border-color:var(--error); background:#fbe6e2; animation:shake .3s ease;}
+  @keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.14);}100%{transform:scale(1);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+  .feedback{text-align:center; min-height:30px; font-weight:800; font-size:18px; margin:8px 0 14px;}
+  .feedback.good{color:var(--grass-dark);}
+  .feedback.bad{color:var(--error-dark);}
+
+  .keyboard{display:flex; flex-direction:column; gap:8px; align-items:center; margin-top:auto;}
+  .krow{display:flex; gap:6px; justify-content:center; width:100%;}
+  .key{
+    flex:1; max-width:46px; min-width:0;
+    height:52px;                 /* fixed height so every key matches, all rows included */
+    font-family:var(--body); font-weight:800; font-size:20px; text-transform:uppercase;
+    color:#fff; background:var(--stone); border:none; border-radius:6px;
+    box-shadow:0 4px 0 var(--stone-dark); cursor:pointer;
+    transition:transform .05s, box-shadow .05s;
+    touch-action:manipulation;
+  }
+  .key:active{transform:translateY(3px); box-shadow:0 1px 0 var(--stone-dark);}
+  .key:focus-visible{outline:3px solid #1b3a5c; outline-offset:2px;}
+  .key.wide{flex:1.6; max-width:74px; font-size:22px;}   /* wider but same height */
+  .check-wrap{display:flex; justify-content:center; margin-top:14px;}
+  .check-wrap .btn{min-width:200px;}
+
+  /* ---- READING ---- */
+  .story-card{
+    background:var(--panel); border:3px solid var(--panel-line); border-radius:12px;
+    padding:18px 20px; box-shadow:0 6px 0 rgba(122,82,48,.18); margin-bottom:20px;
+  }
+  .story-title{font-family:var(--display); font-size:13px; line-height:1.5; color:var(--earth); margin:0 0 14px;}
+  .story-text{font-size:20px; line-height:1.7; margin:0; color:var(--ink);}
+  .q{background:#fff; border:2px solid var(--panel-line); border-radius:10px; padding:14px 15px; margin-bottom:14px;
+    transition:background .2s, border-color .2s;}
+  .q.done{background:#e7f6dc; border-color:var(--grass);}
+  .q-text{font-size:18px; font-weight:700; margin:0 0 6px;}
+  .q-hint{font-size:15px; font-weight:700; color:var(--earth); margin:0 0 10px;}
+  .q-hint b{font-size:19px; text-transform:lowercase;}
+  .answer-row{display:flex; gap:10px; align-items:center;}
+  .answer-row input{
+    flex:1; min-width:0;
+    font-family:var(--body); font-size:20px; font-weight:700; color:var(--ink);
+    padding:12px 14px; border-radius:8px; border:3px solid var(--panel-line); background:var(--panel);
+    text-transform:lowercase;
+  }
+  .answer-row input:focus{outline:none; border-color:var(--grass);}
+  .answer-row .btn{padding:12px 18px; font-size:16px;}
+  .q-note{font-size:15px; font-weight:700; min-height:20px; margin:8px 0 0;}
+  .q-note.bad{color:var(--error-dark);}
+  .q.done .answer-row{display:none;}
+  .tick{display:none; font-weight:800; color:var(--grass-dark); font-size:17px; align-items:center; gap:8px;}
+  .q.done .tick{display:flex;}
+  .tick .box{width:24px;height:24px;background:var(--grass);border-radius:5px;color:#fff;
+    display:flex;align-items:center;justify-content:center; box-shadow:0 3px 0 var(--grass-dark);}
+
+  /* ---- CELEBRATION / FINISH ---- */
+  .center-screen{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:20px;}
+  .big-msg{font-family:var(--display); font-size:22px; line-height:1.5; color:#fff;
+    text-shadow:3px 3px 0 var(--grass-dark);}
+  .stars{font-size:40px; letter-spacing:8px; animation:pop .4s ease;}
+  .stack{display:flex; flex-direction:column-reverse; gap:6px; align-items:center;}
+  .stack .blk{width:60px;height:26px;border-radius:5px;background:var(--gold);box-shadow:0 4px 0 var(--gold-dark);
+    animation:rise .4s ease both;}
+  .stack .blk:nth-child(2){animation-delay:.1s}
+  .stack .blk:nth-child(3){animation-delay:.2s}
+  .stack .blk:nth-child(4){animation-delay:.3s}
+  @keyframes rise{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;}}
+  .sub-note{font-size:16px; font-weight:600; opacity:.9; max-width:360px; color:var(--ink);}
+  .total-line{font-family:var(--display); font-size:14px; line-height:1.6; color:var(--gold-dark);
+    background:#fff; border:3px solid var(--gold); border-radius:10px; padding:12px 16px;
+    box-shadow:0 4px 0 var(--gold-dark);}
+  .error-panel{background:var(--panel); border:3px solid var(--error); border-radius:12px;
+    padding:20px 22px; margin:20px 0; box-shadow:0 6px 0 var(--error-dark);}
+  .error-panel h2{font-family:var(--display); font-size:16px; color:var(--error-dark); margin:0 0 12px;}
+  .error-panel p{font-size:16px; font-weight:600; margin:0 0 12px;}
+  .error-panel ul{margin:0; padding-left:22px;}
+  .error-panel li{font-size:15px; line-height:1.5; margin-bottom:8px; color:var(--ink);}
+
+  @media (max-width:420px){
+    .title{font-size:24px;}
+    .slot{width:56px;height:72px;font-size:38px;}
+    .key{font-size:18px; height:48px;}
+    .story-text{font-size:18px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="ground"></div>
+
+  <div class="app">
+
+    <!-- HOME -->
+    <section id="home" class="screen active">
+      <div class="home-inner">
+        <h1 class="title">WORD<br><span>BUILDER</span></h1>
+        <p class="tagline">Spell the words and read the stories to build your world.</p>
+        <div class="level-map" id="levelMap"></div>
+        <button class="btn btn-start" id="startBtn">Start</button>
+        <div class="voice-setup">
+          <label for="voiceSelect">Voice (grown-ups)</label>
+          <div class="voice-row">
+            <select id="voiceSelect"><option value="">Auto (best English voice)</option></select>
+            <button class="btn stone" id="testVoiceBtn" type="button">Test</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPELLING -->
+    <section id="spelling" class="screen">
+      <div class="topbar">
+        <span class="level-badge" id="spLevelBadge">LEVEL 1</span>
+        <div class="pips" id="spPips"></div>
+        <button class="home-link" data-home>Home</button>
+      </div>
+      <p class="prompt">Listen, then tap the letters.</p>
+      <div class="tools">
+        <button class="btn gold" id="hearBtn"><span class="speaker-ico">&#128266;</span> Hear it again</button>
+        <button class="btn gold" id="clearBtn"><span class="speaker-ico">&#10006;</span> Clear</button>
+      </div>
+      <div class="slots" id="slots"></div>
+      <div class="feedback" id="spFeedback"></div>
+      <div class="keyboard" id="keyboard"></div>
+      <div class="check-wrap">
+        <button class="btn" id="checkBtn" disabled>Check</button>
+      </div>
+    </section>
+
+    <!-- READING -->
+    <section id="reading" class="screen">
+      <div class="topbar">
+        <span class="level-badge" id="rdLevelBadge">LEVEL 3</span>
+        <div class="pips" id="rdPips"></div>
+        <button class="home-link" data-home>Home</button>
+      </div>
+      <div class="story-card">
+        <h2 class="story-title" id="storyTitle"></h2>
+        <p class="story-text" id="storyText"></p>
+      </div>
+      <div id="questions"></div>
+    </section>
+
+    <!-- LEVEL COMPLETE -->
+    <section id="levelDone" class="screen">
+      <div class="center-screen">
+        <div class="stars" id="levelDoneStars">&#11088;&#11088;&#11088;</div>
+        <div class="big-msg" id="levelDoneMsg">Level complete!</div>
+        <button class="btn btn-start" id="nextBtn">Next</button>
+      </div>
+    </section>
+
+    <!-- FINISH -->
+    <section id="finish" class="screen">
+      <div class="center-screen">
+        <div class="stack"><div class="blk"></div><div class="blk"></div><div class="blk"></div><div class="blk"></div></div>
+        <div class="big-msg">You did it!</div>
+        <div class="total-line" id="finishTotal"></div>
+        <p class="sub-note">You finished all the levels. Great spelling and reading!</p>
+        <button class="btn gold" id="againBtn">Play again</button>
+      </div>
+    </section>
+
+    <!-- CONTENT ERROR (shown only if the content section has a problem) -->
+    <section id="contentError" class="screen">
+      <div class="error-panel">
+        <h2>The content needs a quick fix</h2>
+        <p>Before the game can start, please fix the following in the content section at the top of the file, then reload:</p>
+        <ul id="errorList"></ul>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     ║  CONTENT  —  EDIT ONLY THIS SECTION                                      ║
+     ══════════════════════════════════════════════════════════════════════════
+     HOW IT WORKS
+      • Spelling levels: put lots of words in "pool". Each time the level is
+        played, the game randomly picks "spellingWordsPerLevel" of them.
+      • Reading levels: put one or more stories in "stories". Each play, the
+        game randomly picks ONE story from the pool.
+      • You can add as many words / stories as you like — the pools can grow.
+
+     RULES (the game checks these on load and tells you in plain English if
+     something is wrong, naming the exact level/word/question):
+      • Spelling words: lowercase letters a–z only. No spaces, capitals,
+        numbers or punctuation (e.g. "frog" ✓, "Frog" ✗, "hot dog" ✗).
+      • Reading answers ("a"): must be ONE word, and must actually appear
+        somewhere in that story's text (that's how the player finds it).
+      • Keep the commas between items and the quotes around text.
+     ════════════════════════════════════════════════════════════════════════ */
+
+  const CONTENT = {
+
+    spellingWordsPerLevel: 4,   // how many words each spelling level shows per play
+
+    levels: [
+
+      { type:'spelling', label:'Level 1',
+        pool:[ 'clap','flag','frog','grin','plan','trip','drum','crab','brick','glad' ]
+      },
+
+      { type:'spelling', label:'Level 2',
+        pool:[ 'stop','spin','swim','snap','step','skip','star','nest','fast','lamp' ]
+      },
+
+      { type:'reading', label:'Level 3',
+        stories:[
+          {
+            title:'The Tortoise and the Hare',
+            text:'The hare could run very fast. He liked to make fun of the slow tortoise. One day the tortoise asked the hare to race. The hare ran far in front. He was so sure he would win that he stopped for a nap. The tortoise did not stop. He went slow but he kept going. The hare woke up too late. The tortoise had already won the race.',
+            questions:[
+              { q:'Who won the race?', a:'tortoise' },
+              { q:'What did the hare stop for?', a:'nap' },
+              { q:'What was the hare so sure he would do?', a:'win' }
+            ]
+          }
+        ]
+      },
+
+      { type:'reading', label:'Level 4',
+        stories:[
+          {
+            title:'The Lion and the Mouse',
+            text:'A big lion was asleep. A little mouse ran over his paw and woke him up. The lion caught the mouse in his claws. The mouse asked the lion to let him go. The lion laughed and set the mouse free. Later, the lion was caught in a net. He could not get out. The little mouse heard him. The mouse used his teeth to bite through the ropes. Soon the lion was free.',
+            questions:[
+              { q:'What animal was asleep?', a:'lion' },
+              { q:'What woke the lion up?', a:'mouse' },
+              { q:'What was the lion caught in?', a:'net' },
+              { q:'What did the mouse use to bite the ropes?', a:'teeth' }
+            ]
+          }
+        ]
+      }
+
+    ]
+  };
+
+  /* ══ END OF CONTENT — please don't edit below this line ══════════════════ */
+
+  const LEVELS = CONTENT.levels;
+
+  // ---------- state ----------
+  let levelIndex = 0;
+  let wordIndex = 0;      // within a spelling level
+  let entered = [];       // letters typed for current word
+  let locked = false;     // brief lock during transitions
+  let levelWrong = 0;     // wrong attempts in the current level
+  let totalStars = 0;     // stars earned across all levels this run
+  let activeWords = [];   // the words drawn from the pool for the current spelling level
+  let activeStory = null; // the story drawn from the pool for the current reading level
+  const MAX_STARS = LEVELS.length * 3;
+
+  // ---------- content helpers ----------
+  function sample(arr, n){
+    const copy = arr.slice();
+    for(let i=copy.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=copy[i]; copy[i]=copy[j]; copy[j]=t; }
+    return copy.slice(0, Math.min(n, copy.length));
+  }
+  function pickOne(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function drawCount(lv){ return lv.draw || CONTENT.spellingWordsPerLevel; }
+
+  // ---------- content validator (plain-English problem reports) ----------
+  function validateContent(C){
+    const p = [];
+    if(!C || !Array.isArray(C.levels) || !C.levels.length){
+      p.push('There are no levels. Add at least one level in the content section.');
+      return p;
+    }
+    if(typeof C.spellingWordsPerLevel!=='number' || C.spellingWordsPerLevel<1){
+      p.push('"spellingWordsPerLevel" should be a whole number of at least 1.');
+    }
+    C.levels.forEach((lv,i)=>{
+      const where='Level '+(i+1)+' ('+(lv.label||'no label')+')';
+      if(lv.type!=='spelling' && lv.type!=='reading'){ p.push(where+': "type" must be either "spelling" or "reading".'); return; }
+      if(lv.type==='spelling'){
+        if(!Array.isArray(lv.pool) || !lv.pool.length){ p.push(where+': needs a "pool" list with at least one word.'); return; }
+        lv.pool.forEach((w,wi)=>{
+          if(typeof w!=='string' || !/^[a-z]+$/.test(w)){
+            p.push(where+', word '+(wi+1)+' ("'+w+'"): must be lowercase letters a–z only (no spaces, capitals, numbers or punctuation).');
+          }
+        });
+      } else {
+        if(!Array.isArray(lv.stories) || !lv.stories.length){ p.push(where+': needs a "stories" list with at least one story.'); return; }
+        lv.stories.forEach((st,si)=>{
+          const sw=where+', story '+(si+1)+' ('+((st&&st.title)||'no title')+')';
+          if(!st || typeof st.title!=='string' || !st.title.trim()) p.push(sw+': needs a "title".');
+          if(!st || typeof st.text!=='string' || !st.text.trim()){ p.push(sw+': needs story "text".'); return; }
+          if(!Array.isArray(st.questions) || !st.questions.length){ p.push(sw+': needs at least one question.'); return; }
+          const lower=st.text.toLowerCase();
+          st.questions.forEach((qq,qi)=>{
+            const qw=sw+', question '+(qi+1);
+            if(!qq || typeof qq.q!=='string' || !qq.q.trim()) p.push(qw+': needs question text (the "q" field).');
+            if(!qq || typeof qq.a!=='string' || !qq.a.trim()){ p.push(qw+': needs an answer (the "a" field).'); return; }
+            const a=qq.a.trim();
+            if(/\s/.test(a)) p.push(qw+': the answer "'+qq.a+'" has a space — answers must be a single word.');
+            else if(!/^[a-zA-Z]+$/.test(a)) p.push(qw+': the answer "'+qq.a+'" should be one word of letters only.');
+            else if(!lower.includes(a.toLowerCase())) p.push(qw+': the answer "'+qq.a+'" does not appear anywhere in the story text, so the player can’t find it by reading.');
+          });
+        });
+      }
+    });
+    return p;
+  }
+
+  // ---------- speech ----------
+  let voices = [];
+  let chosenVoiceURI = '';   // '' = auto; otherwise the voiceURI the grown-up picked
+  function loadVoices(){ voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; }
+  if(window.speechSynthesis){
+    loadVoices();
+    speechSynthesis.onvoiceschanged = function(){
+      loadVoices();
+      populateVoiceSelect();
+      if(pendingWord){ const w=pendingWord; pendingWord=null; speak(w); }
+    };
+  }
+  function pickVoice(){
+    if(!voices || !voices.length) return null;
+    // A grown-up's explicit choice always wins (even if it's not English).
+    if(chosenVoiceURI){
+      const c = voices.find(v=>v.voiceURI===chosenVoiceURI);
+      if(c) return c;
+    }
+    // Otherwise: English only, preferring a clear female voice. The API can't report
+    // gender, so we match well-known female voice names, preferring UK English first.
+    const en = voices.filter(v=>/^en[-_]|^en$/i.test(v.lang));
+    if(!en.length) return null;
+    const female = /female|samantha|karen|serena|kate|stephanie|martha|moira|tessa|fiona|victoria|allison|ava|susan|hazel|zira|catherine|amelie|joana|nora/i;
+    const gb = en.filter(v=>/en[-_]GB/i.test(v.lang));
+    return gb.find(v=>female.test(v.name))   // UK female
+        || en.find(v=>female.test(v.name))   // any English female
+        || gb[0]                             // any UK voice
+        || en[0]                             // any English voice
+        || null;
+  }
+  // Fill the grown-ups' voice dropdown with whatever voices this device exposes.
+  function populateVoiceSelect(){
+    const sel = document.getElementById('voiceSelect');
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '';
+    const auto = document.createElement('option');
+    auto.value = ''; auto.textContent = 'Auto (best English voice)';
+    sel.appendChild(auto);
+    voices.filter(v=>/^en\b|^en[-_]/i.test(v.lang)).forEach(v=>{
+      const o = document.createElement('option');
+      o.value = v.voiceURI; o.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(o);
+    });
+    sel.value = prev || '';
+  }
+  let pendingWord = null;
+  function unlockAudio(){
+    if(!window.speechSynthesis) return;
+    try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){}
+  }
+  function speak(word){
+    if(!window.speechSynthesis) return;
+    // If the voice list hasn't loaded yet, remember the word and speak it the
+    // moment voices become available (handled in onvoiceschanged above).
+    if(!voices || !voices.length){ loadVoices(); if(!voices.length){ pendingWord=word; return; } }
+    try{
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(word + '.');  // trailing stop stops short words being clipped
+      const v = pickVoice();
+      if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-GB'; }
+      u.rate=0.75; u.pitch=1.05;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---------- screen helpers ----------
+  const screens = ['home','spelling','reading','levelDone','finish','contentError'];
+  function show(id){
+    screens.forEach(s=>{
+      document.getElementById(s).classList.toggle('active', s===id);
+    });
+    window.scrollTo(0,0);
+  }
+  function el(id){ return document.getElementById(id); }
+  function renderErrors(list){
+    const ul=el('errorList'); ul.innerHTML='';
+    list.forEach(msg=>{ const li=document.createElement('li'); li.textContent=msg; ul.appendChild(li); });
+  }
+
+  // ---------- home ----------
+  function renderHome(){
+    const map = el('levelMap'); map.innerHTML='';
+    LEVELS.forEach((lv,i)=>{
+      const b=document.createElement('div');
+      b.className='map-block'+(i<levelIndex?' done':'');
+      b.textContent=(i+1);
+      map.appendChild(b);
+    });
+  }
+
+  // ---------- progress pips ----------
+  function renderPips(containerId, total, current){
+    const c=el(containerId); c.innerHTML='';
+    for(let i=0;i<total;i++){
+      const p=document.createElement('div');
+      p.className='pip'+(i<current?' done':'')+(i===current?' current':'');
+      c.appendChild(p);
+    }
+  }
+
+  // ---------- spelling ----------
+  const KEY_ROWS = ['qwertyuiop','asdfghjkl','zxcvbnm'];
+  function buildKeyboard(){
+    const kb=el('keyboard'); kb.innerHTML='';
+    KEY_ROWS.forEach((row,ri)=>{
+      const r=document.createElement('div'); r.className='krow';
+      row.split('').forEach(ch=>{
+        const k=document.createElement('button');
+        k.className='key'; k.type='button'; k.textContent=ch; k.setAttribute('aria-label',ch);
+        k.addEventListener('click',()=>tapLetter(ch));
+        r.appendChild(k);
+      });
+      if(ri===2){
+        const back=document.createElement('button');
+        back.className='key wide'; back.type='button'; back.innerHTML='&#9003;'; back.setAttribute('aria-label','delete');
+        back.addEventListener('click', backspace);
+        r.appendChild(back);
+      }
+      kb.appendChild(r);
+    });
+  }
+
+  function currentWord(){ return activeWords[wordIndex]; }
+
+  function startSpellingLevel(){
+    activeWords = sample(LEVELS[levelIndex].pool, drawCount(LEVELS[levelIndex]));
+    wordIndex=0;
+    levelWrong=0;
+    el('spLevelBadge').textContent=LEVELS[levelIndex].label;
+    show('spelling');
+    loadWord(true);
+  }
+
+  function loadWord(auto){
+    entered=[];
+    const word=currentWord();
+    el('spFeedback').textContent=''; el('spFeedback').className='feedback';
+    renderPips('spPips', activeWords.length, wordIndex);
+    renderSlots(false,false);
+    updateCheck();
+    if(auto) speak(word);  // auto-say (kept in the tap chain for the first word so iOS allows it)
+  }
+
+  function renderSlots(correct,wrong){
+    const word=currentWord();
+    const s=el('slots'); s.innerHTML='';
+    s.className='slots'+(correct?' correct':'')+(wrong?' wrong':'');
+    for(let i=0;i<word.length;i++){
+      const d=document.createElement('div');
+      d.className='slot'+(entered[i]?' filled':'');
+      d.textContent=entered[i]?entered[i]:'';
+      s.appendChild(d);
+    }
+  }
+
+  function tapLetter(ch){
+    if(locked) return;
+    const word=currentWord();
+    if(entered.length>=word.length) return;
+    entered.push(ch);
+    el('spFeedback').textContent=''; el('spFeedback').className='feedback';
+    renderSlots(false,false);
+    updateCheck();
+  }
+  function backspace(){
+    if(locked) return;
+    entered.pop();
+    el('spFeedback').textContent=''; el('spFeedback').className='feedback';
+    renderSlots(false,false);
+    updateCheck();
+  }
+  function clearWord(){
+    if(locked) return;
+    entered=[];
+    el('spFeedback').textContent=''; el('spFeedback').className='feedback';
+    renderSlots(false,false);
+    updateCheck();
+  }
+  function updateCheck(){
+    el('checkBtn').disabled = entered.length!==currentWord().length;
+  }
+
+  function checkWord(){
+    if(locked) return;
+    const word=currentWord();
+    if(entered.length!==word.length) return;
+    if(entered.join('')===word){
+      locked=true;
+      renderSlots(true,false);
+      const fb=el('spFeedback'); fb.textContent='Nice! Well spelled.'; fb.className='feedback good';
+      setTimeout(()=>{
+        locked=false;
+        wordIndex++;
+        if(wordIndex>=activeWords.length){
+          completeLevel();
+        } else {
+          loadWord(true);
+        }
+      }, 900);
+    } else {
+      levelWrong++;
+      renderSlots(false,true);
+      const fb=el('spFeedback'); fb.textContent='Not quite \u2014 tap Clear and try again.'; fb.className='feedback bad';
+      setTimeout(()=>{ renderSlots(false,false); }, 500);
+    }
+  }
+
+  // ---------- reading ----------
+  function startReadingLevel(){
+    const lv=LEVELS[levelIndex];
+    activeStory = pickOne(lv.stories);
+    levelWrong=0;
+    el('rdLevelBadge').textContent=lv.label;
+    el('storyTitle').textContent=activeStory.title;
+    el('storyText').textContent=activeStory.text;
+    const total=activeStory.questions.length;
+    renderPips('rdPips', total, 0);
+    const box=el('questions'); box.innerHTML='';
+    activeStory.questions.forEach((qq,qi)=>{
+      const wrap=document.createElement('div'); wrap.className='q'; wrap.dataset.i=qi;
+
+      const qt=document.createElement('p'); qt.className='q-text'; qt.textContent=(qi+1)+'. '+qq.q;
+      const hint=document.createElement('p'); hint.className='q-hint';
+      hint.innerHTML='Starts with: <b>'+qq.a[0]+'</b>';
+
+      const row=document.createElement('div'); row.className='answer-row';
+      const inp=document.createElement('input');
+      inp.type='text'; inp.autocomplete='off'; inp.autocapitalize='none';
+      inp.setAttribute('autocorrect','off'); inp.spellcheck=false;
+      inp.setAttribute('inputmode','text');
+      inp.placeholder='Type the word';
+      const btn=document.createElement('button'); btn.className='btn'; btn.type='button'; btn.textContent='Check';
+
+      const note=document.createElement('p'); note.className='q-note';
+
+      const tick=document.createElement('div'); tick.className='tick';
+      tick.innerHTML='<span class="box">&#10003;</span> Correct!';
+
+      // Keep the input visible above the iPad's on-screen keyboard when it opens.
+      inp.addEventListener('focus', ()=>{ setTimeout(()=>{ try{ inp.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 300); });
+
+      function tryAnswer(){
+        const val=inp.value.trim().toLowerCase();
+        if(!val) return;
+        if(val===qq.a.toLowerCase()){
+          wrap.classList.add('done');
+          note.textContent=''; note.className='q-note';
+          markReadingProgress();
+        } else {
+          levelWrong++;
+          note.textContent='Have another look at the story and try again.';
+          note.className='q-note bad';
+        }
+      }
+      btn.addEventListener('click', tryAnswer);
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); tryAnswer(); }});
+
+      row.appendChild(inp); row.appendChild(btn);
+      wrap.appendChild(qt); wrap.appendChild(hint); wrap.appendChild(row);
+      wrap.appendChild(note); wrap.appendChild(tick);
+      box.appendChild(wrap);
+    });
+    show('reading');
+  }
+
+  function markReadingProgress(){
+    const done=document.querySelectorAll('#questions .q.done').length;
+    renderPips('rdPips', activeStory.questions.length, done);
+    if(done>=activeStory.questions.length){
+      setTimeout(completeLevel, 700);
+    }
+  }
+
+  // ---------- scoring ----------
+  // 3 stars = no wrong answers (100%); 2 stars = up to one miss per item on
+  // average; 1 star = more misses than that.
+  function starsForItems(items, wrong){
+    if(wrong===0) return 3;
+    if(wrong<=items) return 2;
+    return 1;
+  }
+  function renderStars(containerId, count){
+    let s='';
+    for(let i=0;i<3;i++){ s += (i<count) ? '\u2B50' : '\u2606'; }  // filled star vs outline
+    el(containerId).textContent = s;
+  }
+
+  // ---------- level flow ----------
+  function completeLevel(){
+    const justFinished = levelIndex;   // 0-based index of the level just completed
+    const items = (LEVELS[justFinished].type==='spelling') ? activeWords.length : activeStory.questions.length;
+    const stars = starsForItems(items, levelWrong);
+    totalStars += stars;
+    levelIndex++;
+    if(levelIndex>=LEVELS.length){
+      el('finishTotal').textContent = 'You earned ' + totalStars + ' out of ' + MAX_STARS + ' stars!';
+      show('finish');
+    } else {
+      el('levelDoneMsg').textContent = 'Level ' + (justFinished+1) + ' complete!';
+      renderStars('levelDoneStars', stars);
+      show('levelDone');
+    }
+  }
+
+  function startLevel(){
+    const lv=LEVELS[levelIndex];
+    if(!lv){ show('finish'); return; }
+    if(lv.type==='spelling') startSpellingLevel();
+    else startReadingLevel();
+  }
+
+  // ---------- wiring ----------
+  el('startBtn').addEventListener('click', ()=>{
+    levelIndex=0; totalStars=0;
+    startLevel();  // first word speaks inside this tap, which both unlocks and plays audio
+  });
+  el('nextBtn').addEventListener('click', ()=>{ renderHome(); startLevel(); });
+  el('againBtn').addEventListener('click', ()=>{ levelIndex=0; totalStars=0; renderHome(); show('home'); });
+  el('hearBtn').addEventListener('click', ()=> speak(currentWord()));
+  el('clearBtn').addEventListener('click', clearWord);
+  el('checkBtn').addEventListener('click', checkWord);
+  el('voiceSelect').addEventListener('change', function(){ chosenVoiceURI = this.value; });
+  el('testVoiceBtn').addEventListener('click', function(){ speak('frog'); });
+  document.querySelectorAll('[data-home]').forEach(b=>{
+    b.addEventListener('click', ()=>{ renderHome(); show('home'); });
+  });
+
+  // Physical / USB keyboard support on the spelling screen (works alongside the
+  // on-screen tap keyboard, and alongside the iPad's native keyboard for reading).
+  document.addEventListener('keydown', (e)=>{
+    if(!el('spelling').classList.contains('active')) return;
+    if(locked) return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    if(/^[a-zA-Z]$/.test(e.key)){ tapLetter(e.key.toLowerCase()); e.preventDefault(); }
+    else if(e.key==='Backspace'){ backspace(); e.preventDefault(); }
+    else if(e.key==='Enter'){ if(!el('checkBtn').disabled){ checkWord(); } e.preventDefault(); }
+  });
+
+  // ---------- init ----------
+  buildKeyboard();
+  renderHome();
+  populateVoiceSelect();   // fill the dropdown (repopulates later via onvoiceschanged)
+  const problems = validateContent(CONTENT);
+  if(problems.length){ renderErrors(problems); show('contentError'); }
+  else { show('home'); }
+})();
+</script>
+</body>
+</html>
