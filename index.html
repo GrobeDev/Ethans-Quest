@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Word Builder</title>
+<title>Ethan's Quest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -127,7 +127,7 @@
   }
   .title span{color:var(--gold); text-shadow:4px 4px 0 var(--gold-dark);}
   .tagline{font-size:18px; font-weight:600; max-width:360px; color:var(--ink); margin:0; opacity:.9;}
-  .level-map{display:flex; gap:12px; margin-top:4px;}
+  .level-map{display:flex; gap:10px; margin-top:4px; flex-wrap:wrap; justify-content:center; max-width:340px;}
   .map-block{
     width:52px; height:52px; border-radius:8px; display:flex; align-items:center; justify-content:center;
     font-family:var(--display); font-size:13px; color:#fff;
@@ -147,6 +147,11 @@
     padding:10px 12px; border-radius:8px; border:2px solid var(--panel-line); background:var(--panel);
   }
   .voice-setup .btn{padding:10px 16px; font-size:15px;}
+  .version-tag{font-family:var(--body); font-size:12px; font-weight:700; color:rgba(51,41,28,.4); margin:2px 0 0;}
+  .quest-done-msg{display:none; font-family:var(--display); font-size:13px; line-height:1.6; color:var(--gold-dark);
+    background:#fff; border:3px solid var(--gold); border-radius:10px; padding:12px 16px; margin:0;
+    box-shadow:0 4px 0 var(--gold-dark); max-width:340px;}
+  .quest-done-msg.show{display:block;}
 
   /* ---- SPELLING ---- */
   .prompt{text-align:center; font-size:17px; font-weight:700; opacity:.85; margin:6px 0 16px;}
@@ -161,7 +166,7 @@
     font-size:48px; font-weight:800; color:var(--ink);
     padding-bottom:6px;
   }
-  .slot.filled{background:#fff; border-color:var(--grass); border-bottom-width:8px;}
+  .slot.filled{background:#fff; border-color:var(--stone); border-bottom-width:8px;}
   .slots.correct .slot{background:#e7f6dc; border-color:var(--grass); animation:pop .3s ease;}
   .slots.wrong .slot{border-color:var(--error); background:#fbe6e2; animation:shake .3s ease;}
   @keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.14);}100%{transform:scale(1);}}
@@ -200,14 +205,23 @@
   .q-text{font-size:18px; font-weight:700; margin:0 0 6px;}
   .q-hint{font-size:15px; font-weight:700; color:var(--earth); margin:0 0 10px;}
   .q-hint b{font-size:19px; text-transform:lowercase;}
-  .answer-row{display:flex; gap:10px; align-items:center;}
-  .answer-row input{
-    flex:1; min-width:0;
-    font-family:var(--body); font-size:20px; font-weight:700; color:var(--ink);
-    padding:12px 14px; border-radius:8px; border:3px solid var(--panel-line); background:var(--panel);
-    text-transform:lowercase;
+  .answer-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  /* letter-count tiles for reading answers (mirror the spelling slots, sized down) */
+  .ans-slots{display:flex; gap:7px; flex-wrap:wrap; position:relative; cursor:text;}
+  .ans-slot{
+    width:40px; height:52px; border-radius:8px;
+    background:var(--panel); border:3px solid var(--panel-line);
+    display:flex; align-items:flex-end; justify-content:center;
+    font-size:28px; font-weight:800; color:var(--ink);
+    padding-bottom:4px; text-transform:lowercase;
   }
-  .answer-row input:focus{outline:none; border-color:var(--grass);}
+  .ans-slot.filled{background:#fff; border-color:var(--stone); border-bottom-width:6px;}
+  .ans-slot.cursor{border-color:#1b3a5c; box-shadow:0 0 0 3px rgba(27,58,92,.2);}
+  .ans-slots.correct .ans-slot{background:#e7f6dc; border-color:var(--grass); animation:pop .3s ease;}
+  .ans-slots.wrong .ans-slot{border-color:var(--error); background:#fbe6e2; animation:shake .3s ease;}
+  /* the real input sits invisibly over the tiles so the iPad keyboard still works */
+  .ans-hidden-input{position:absolute; inset:0; opacity:0; border:0; padding:0; margin:0;
+    font-size:16px; background:transparent; color:transparent; caret-color:transparent; cursor:text;}
   .answer-row .btn{padding:12px 18px; font-size:16px;}
   .q-note{font-size:15px; font-weight:700; min-height:20px; margin:8px 0 0;}
   .q-note.bad{color:var(--error-dark);}
@@ -245,6 +259,7 @@
     .slot{width:56px;height:72px;font-size:38px;}
     .key{font-size:18px; height:48px;}
     .story-text{font-size:18px;}
+    .map-block{width:44px; height:44px; font-size:11px;}
   }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important;}
@@ -261,8 +276,9 @@
     <!-- HOME -->
     <section id="home" class="screen active">
       <div class="home-inner">
-        <h1 class="title">WORD<br><span>BUILDER</span></h1>
-        <p class="tagline">Spell the words and read the stories to build your world.</p>
+        <h1 class="title">ETHAN'S<br><span>QUEST</span></h1>
+        <p class="tagline">Make sure to do your other homework first!</p>
+        <p class="quest-done-msg" id="questDoneMsg">You have completed your quest for today</p>
         <div class="level-map" id="levelMap"></div>
         <button class="btn btn-start" id="startBtn">Start</button>
         <div class="voice-setup">
@@ -272,6 +288,7 @@
             <button class="btn stone" id="testVoiceBtn" type="button">Test</button>
           </div>
         </div>
+        <p class="version-tag">V0.02</p>
       </div>
     </section>
 
@@ -322,9 +339,8 @@
     <section id="finish" class="screen">
       <div class="center-screen">
         <div class="stack"><div class="blk"></div><div class="blk"></div><div class="blk"></div><div class="blk"></div></div>
-        <div class="big-msg">You did it!</div>
+        <div class="big-msg">Congratulations, you have unlocked your games and other apps.</div>
         <div class="total-line" id="finishTotal"></div>
-        <p class="sub-note">You finished all the levels. Great spelling and reading!</p>
         <button class="btn gold" id="againBtn">Play again</button>
       </div>
     </section>
@@ -369,38 +385,509 @@
 
     levels: [
 
-      { type:'spelling', label:'Level 1',
-        pool:[ 'clap','flag','frog','grin','plan','trip','drum','crab','brick','glad' ]
+      { type:'spelling', label:'Level 1',   // Spelling Level 1
+        pool:[ "cat", "bat", "hat", "map", "sad", "mat", "rat", "cap", "tap", "bag", "rag", "fan", "pan", "gas", "wax", "wag", "tag", "gap", "sap", "bad", "had", "pep", "ram", "yam", "tax", "lad", "dad", "mad", "pad", "tan", "van", "jam", "ham", "bed", "red", "net", "wet", "men", "ten", "leg", "pet", "get", "fed", "peg", "web", "beg", "hem", "jet", "set", "met", "vet", "meg", "gem", "big", "pig", "sit", "win", "dig", "dog", "log", "mop", "fox", "bug", "sun", "cup", "bin", "fin", "lip", "zip", "fit", "hit", "hop", "top", "box", "pot", "mud", "nut", "run", "fun", "gum", "hum", "jug", "tug", "rug", "tub", "rub", "sub", "pup", "bus", "cut", "hut", "job", "cob", "rob", "sob", "nod", "rod", "dot", "hot", "not", "pop", "bit", "kit", "lit", "pit", "wig", "hug", "mug", "got", "lot", "rot" ]
       },
 
-      { type:'spelling', label:'Level 2',
-        pool:[ 'stop','spin','swim','snap','step','skip','star','nest','fast','lamp' ]
-      },
-
-      { type:'reading', label:'Level 3',
+      { type:'reading', label:'Level 2',   // Story Level 1
         stories:[
           {
-            title:'The Tortoise and the Hare',
-            text:'The hare could run very fast. He liked to make fun of the slow tortoise. One day the tortoise asked the hare to race. The hare ran far in front. He was so sure he would win that he stopped for a nap. The tortoise did not stop. He went slow but he kept going. The hare woke up too late. The tortoise had already won the race.',
+            title:"The Lion and the Mouse",
+            text:"A big lion lay down to take a nap in the warm sun. A tiny mouse ran past and tripped over the lion's big nose. The lion woke up in a bad mood and grabbed the mouse by his tail. \"Please do not eat me!\" cried the little mouse. \"I can help you one day!\" The lion laughed at the silly idea, but he was kind and let the mouse go. Later, the lion was caught in a heavy rope net. The little mouse heard him roar and came running. She chewed the ropes with her sharp teeth until the lion was free.",
             questions:[
-              { q:'Who won the race?', a:'tortoise' },
-              { q:'What did the hare stop for?', a:'nap' },
-              { q:'What was the hare so sure he would do?', a:'win' }
+              { q:"What small animal woke the Lion?", a:"mouse" },
+              { q:"What part of the small animal did the lion grab to pick it up?", a:"tail" },
+              { q:"What did the small animal use to cut the ropes and free the Lion?", a:"teeth" }
+            ]
+          },
+          {
+            title:"The Sad Cat and the Red Bed",
+            text:"A fat cat sat on a mat. A bad dog ran past the mat. The fat cat got mad and ran to a red bed. The boy fed the cat a bit of ham from a tin can. The cat felt glad and fell fast asleep on the soft red bed. The bad dog slept on the rug.",
+            questions:[
+              { q:"What colour is the bed?", a:"red" },
+              { q:"What did the cat eat?", a:"ham" },
+              { q:"What did the bad dog sleep on?", a:"rug" }
+            ]
+          },
+          {
+            title:"The Dry Chicken",
+            text:"A chicken walked up to a duck at the park. \"Want to race to the pond?\" asked the chicken. The duck laughed and said, \"I can swim there, but you cannot!\" The chicken frowned and walked all the way around the muddy pond instead. It took him ten minutes, but he stayed nice and dry.",
+            questions:[
+              { q:"The chicken asked the duck for a....?", a:"race" },
+              { q:"What was the pond like?", a:"muddy" },
+              { q:"How many minutes did it take the chicken?", a:"ten" }
+            ]
+          },
+          {
+            title:"The Long Nap",
+            text:"A snail can sleep for three whole years in a row! When the weather gets too hot or too dry, a snail hides inside its shell and naps until things get better. It seals the shell shut with a thin layer of slime, like a tiny door. Then one day, rain comes, and the snail wakes up ready to munch on leaves again.",
+            questions:[
+              { q:"How many years can a snail sleep for?", a:"three" },
+              { q:"What does the snail use to seal its shell shut?", a:"slime" },
+              { q:"What makes the snail wake up again?", a:"rain" }
+            ]
+          },
+          {
+            title:"The Heavy Blue Whale",
+            text:"A blue whale has a huge heart. Its heart is as big as a car and beats very slow deep in the blue sea.",
+            questions:[
+              { q:"A whale's heart is as big as a...?", a:"car" }
+            ]
+          },
+          {
+            title:"The Fast Frog",
+            text:"Some tiny tree frogs can jump very far. These frogs can leap twenty times their own body length in just one quick bound. This frog is blue which is odd because frogs are normally green.",
+            questions:[
+              { q:"What colour is the frog?", a:"blue" }
+            ]
+          },
+          {
+            title:"Space Travel Drive",
+            text:"If you could drive a car straight up into space, it would take one hour.",
+            questions:[
+              { q:"How many hours does it take to drive straight up to space?", a:"one" }
+            ]
+          },
+          {
+            title:"The Sunshine Sneeze",
+            text:"Some people sneeze when they look at bright sunlight. It happens the second they step outside on a sunny day! Nobody knows why the sun makes some noses so ticklish. About one in four people have this funny sunshine sneeze, so maybe you know someone who has it too.",
+            questions:[
+              { q:"What bright thing makes people sneeze?", a:"sunlight" }
+            ]
+          },
+          {
+            title:"The Backwards Bird",
+            text:"A hummingbird is the only bird that can fly backwards. It flaps its wings so fast, almost fifty times every second, that it looks like it is standing still in the air. This clever trick lets it back away from a flower after having a drink. Then it zooms off to find another flower in the garden.",
+            questions:[
+              { q:"How many times do its wings flap every second?", a:"fifty" },
+              { q:"The bird can find another flower in the...?", a:"garden" }
+            ]
+          },
+          {
+            title:"Floating Water Drops",
+            text:"In space, if you pour water out of a bottle, the water will float around like big round balls.",
+            questions:[
+              { q:"What does water do in space when you pour it?", a:"float" }
+            ]
+          },
+          {
+            title:"Scrap Metal Magnets",
+            text:"A big magnet can lift a heavy scrap car up into the air.",
+            questions:[
+              { q:"What big thing can you use to lift a car into the air?", a:"magnet" }
             ]
           }
         ]
       },
 
-      { type:'reading', label:'Level 4',
+      { type:'spelling', label:'Level 3',   // Spelling Level 2
+        pool:[ "bell", "hill", "doll", "yell", "fall", "wall", "pass", "kiss", "boss", "mess", "cliff", "puff", "well", "sell", "mill", "pill", "tall", "ball", "miss", "less", "hiss", "muff", "fuzz", "buzz", "call", "gull", "dull", "hull", "mass", "toss", "fuss", "huff", "cuff", "sniff", "bluff", "jazz", "fizz", "rill", "will", "fill", "kill", "toll", "roll", "scoff", "tiff", "lull", "bull", "moss", "loss", "lass", "sill", "till", "whizz", "cell", "dell", "hell" ]
+      },
+
+      { type:'reading', label:'Level 4',   // Story Level 2
         stories:[
           {
-            title:'The Lion and the Mouse',
-            text:'A big lion was asleep. A little mouse ran over his paw and woke him up. The lion caught the mouse in his claws. The mouse asked the lion to let him go. The lion laughed and set the mouse free. Later, the lion was caught in a net. He could not get out. The little mouse heard him. The mouse used his teeth to bite through the ropes. Soon the lion was free.',
+            title:"The Ant and the Grasshopper",
+            text:"All through the warm summer, a grasshopper sang and played. A tiny ant worked hard. The ant found food to store away for the winter. The grasshopper laughed at the ant. \"Why work so hard on such a fine day?\" he asked. \"Come and play!\" The ant said no. He kept looking for food. When winter came, the ground was cold and bare. The grasshopper had nothing to eat. He was very hungry, while the ant had plenty of food in his warm home.",
             questions:[
-              { q:'What animal was asleep?', a:'lion' },
-              { q:'What woke the lion up?', a:'mouse' },
-              { q:'What was the lion caught in?', a:'net' },
-              { q:'What did the mouse use to bite the ropes?', a:'teeth' }
+              { q:"What season did the grasshopper sing and play in?", a:"summer" },
+              { q:"What did the ant store away for the winter?", a:"food" },
+              { q:"Who had nothing to eat when winter came?", a:"grasshopper" }
+            ]
+          },
+          {
+            title:"The Bell on the Hill",
+            text:"A small doll sat by a brass bell on a tall hill. The wind began to puff and blow. The heavy bell fell off the hill with a loud buzz. A swift fox ran to miss the falling bell. It fell into a soft mass of green moss at the bottom.",
+            questions:[
+              { q:"What metal was the bell made of?", a:"brass" },
+              { q:"What animal ran to miss the falling bell?", a:"fox" },
+              { q:"What soft green thing did the bell fall into?", a:"moss" }
+            ]
+          },
+          {
+            title:"The Pink Milk",
+            text:"A hippo is a huge wild beast that loves water. It gives its sweet milk to its baby, and that milk is bright pink.",
+            questions:[
+              { q:"What animal gives pink milk to its baby?", a:"hippo" },
+              { q:"What colour is the hippo's milk?", a:"pink" }
+            ]
+          },
+          {
+            title:"The Bug That Glows",
+            text:"A firefly is a small bug that can make its own light. It flies at night and glows on and off like a tiny lamp. The light is not hot like fire, so it will not burn you. Fireflies glow to find each other in the dark.",
+            questions:[
+              { q:"What kind of bug can make its own light?", a:"firefly" },
+              { q:"When does a firefly fly and glow?", a:"night" },
+              { q:"Fireflies glow to find each other in the...?", a:"dark" }
+            ]
+          },
+          {
+            title:"The Buzzing Bee",
+            text:"A bee can buzz its wings very fast. It uses a small sting to keep itself safe. A bee also makes sweet honey in its hive.",
+            questions:[
+              { q:"What sound can a bee make with its wings?", a:"buzz" },
+              { q:"What does a bee use to keep itself safe?", a:"sting" },
+              { q:"Where does a bee make its honey?", a:"hive" }
+            ]
+          },
+          {
+            title:"The Melted Rock",
+            text:"Deep inside the earth, it is very hot. It is so hot that solid rock melts and turns into liquid magma. When magma reaches the surface, people call it lava instead. Magma can glow bright orange or red because it is so hot.",
+            questions:[
+              { q:"What does solid rock turn into deep inside the earth?", a:"magma" },
+              { q:"What do people call magma once it reaches the surface?", a:"lava" },
+              { q:"What colour can magma glow because it is so hot?", a:"orange" }
+            ]
+          },
+          {
+            title:"The Colour-Changing Fish",
+            text:"A flounder is a flat fish that lives on the sea floor. It can change its skin colour to match the sand and rocks around it. This helps the flounder hide from big fish. Both of its eyes sit on just one side of its flat body.",
+            questions:[
+              { q:"What kind of fish can change its skin colour?", a:"flounder" },
+              { q:"The flounder hides from big...?", a:"fish" }
+            ]
+          },
+          {
+            title:"History of Currency",
+            text:"Long ago, people used blocks of salt as money to buy food and clothes.",
+            questions:[
+              { q:"What did people use as money long ago?", a:"salt" }
+            ]
+          },
+          {
+            title:"The Tall Drink",
+            text:"A giraffe has a very long neck. It uses its long neck to reach leaves high up in trees. A giraffe also has a long tongue that can grab leaves off thin branches. Its tongue can be very dark, sometimes black.",
+            questions:[
+              { q:"What part of the giraffe's body helps it reach high leaves?", a:"neck" },
+              { q:"What part of its body grabs leaves off branches?", a:"tongue" },
+              { q:"What colour can a giraffe's tongue be?", a:"black" }
+            ]
+          },
+          {
+            title:"The Desert Hump",
+            text:"A camel has a big hump on its back. The hump does not store water like people think. It really stores fat that helps the camel walk for days without much food. Camels can cross hot, dry deserts for a long time.",
+            questions:[
+              { q:"What is on a camel's back?", a:"hump" },
+              { q:"What does a camel's hump really store?", a:"fat" },
+              { q:"What kind of hot, dry land can a camel cross?", a:"desert" }
+            ]
+          }
+        ]
+      },
+
+      { type:'spelling', label:'Level 5',   // Spelling Level 3
+        pool:[ "fish", "ship", "shop", "dish", "chip", "rich", "much", "chop", "thin", "with", "path", "moth", "cash", "rush", "wish", "shut", "chin", "chat", "such", "math", "them", "than", "when", "whip", "dash", "gash", "lash", "mash", "rash", "sash", "whim", "chum", "chug", "shin", "shot", "shun", "shed", "this", "that", "thus", "bath", "whiz", "chap", "thug", "thaw", "chef", "chomp", "chick", "thick", "shack", "shock", "shrub", "shred", "thump", "wham", "whiff", "duck", "sock", "lock", "rock", "kick", "pack", "king", "ring", "sing", "wing", "song", "long", "luck", "back", "sack", "neck", "sick" ]
+      },
+
+      { type:'reading', label:'Level 6',   // Story Level 3
+        stories:[
+          {
+            title:"The Town Mouse and the Country Mouse",
+            text:"A city mouse went to visit his cousin in the quiet country. The country mouse served a simple meal of fresh corn and carrots. The city mouse sniffed and said, \"This food is so boring! Come to the city and see how well I live.\" The country mouse agreed and went to the big town. They found a grand feast on a dining table full of cake, cheese, and sweet fruit. But just as they started to eat, two big cats jumped into the room! The terrified mice ran for their lives, and the country mouse decided he preferred his safe, quiet home after all.",
+            questions:[
+              { q:"What food did the country mouse serve, along with carrots?", a:"corn" },
+              { q:"How many big cats jumped into the room?", a:"two" },
+              { q:"What place did the country mouse decide he liked best?", a:"home" }
+            ]
+          },
+          {
+            title:"The Crow and the Pitcher",
+            text:"A thirsty crow found a water jug. It had a little water at the bottom. He put his beak in, but the water was too low to reach. The jug was too heavy to tip over. The crow thought fast. He picked up small rocks one by one. He dropped them into the jug. Little by little, the rocks filled the bottom. The water rose higher and higher. At last, it reached the top, and the crow was able to drink.",
+            questions:[
+              { q:"What bird was thirsty?", a:"crow" },
+              { q:"What did the crow drop into the jug?", a:"rocks" },
+              { q:"What rose higher and higher in the jug?", a:"water" }
+            ]
+          },
+          {
+            title:"The Fox and the Grapes",
+            text:"A hungry fox spotted a bunch of ripe grapes hanging high on a vine. He licked his lips and thought they looked delicious. He jumped up as high as he could, but he could not reach them. He tried again and again, jumping higher each time, but the grapes stayed just out of reach. At last, the fox gave up and sniffed at the vine one more time. \"Those grapes are probably sour anyway,\" he grumbled, and he trotted off into the bush.",
+            questions:[
+              { q:"What fruit did the fox want to eat?", a:"grapes" },
+              { q:"What did the fox do again and again to reach them?", a:"jumped" },
+              { q:"What did the fox say the grapes probably were?", a:"sour" }
+            ]
+          },
+          {
+            title:"The Smart Crow",
+            text:"A black crow is a very smart bird. It can remember a human face for many years and will tell its friends who is nice or mean.",
+            questions:[
+              { q:"What colour is the smart crow?", a:"black" },
+              { q:"What can a crow remember about a human for many years?", a:"face" }
+            ]
+          },
+          {
+            title:"The Pink Bird",
+            text:"A flamingo is a tall bird with long legs. It is born grey, but it turns bright pink because it eats a lot of pink shrimp.",
+            questions:[
+              { q:"What tall bird is born grey but turns pink?", a:"flamingo" },
+              { q:"What pink food does a flamingo eat a lot of?", a:"shrimp" }
+            ]
+          },
+          {
+            title:"The No-Tail Bear",
+            text:"A koala looks like a small grey bear, but it is not a bear at all. It has two thumbs on each hand and no tail.",
+            questions:[
+              { q:"What animal looks like a bear but is not one?", a:"koala" },
+              { q:"How many thumbs does a koala have on each hand?", a:"two" }
+            ]
+          },
+          {
+            title:"The Tall Mammal",
+            text:"A giraffe is so tall that its legs are longer than a human. It can sleep standing up and only needs a short nap each day.",
+            questions:[
+              { q:"What tall animal has legs longer than a human?", a:"giraffe" },
+              { q:"In what odd position can a giraffe sleep?", a:"standing" }
+            ]
+          },
+          {
+            title:"Brain Power",
+            text:"Your brain has billions of cells that use electricity to help you think.",
+            questions:[
+              { q:"What do brain cells use to help you think?", a:"electricity" }
+            ]
+          },
+          {
+            title:"Super Hot Lightning",
+            text:"Lightning is super hot and can be five times hotter than the sun when it hits.",
+            questions:[
+              { q:"How many times hotter than the sun can lightning be?", a:"five" }
+            ]
+          },
+          {
+            title:"Making Clear Glass",
+            text:"Glass is made from regular sand that got melted down until it became clear.",
+            questions:[
+              { q:"What is glass made from?", a:"sand" }
+            ]
+          },
+          {
+            title:"The Sky Bridge",
+            text:"A rainbow can appear in the sky after it rains. Sunlight and raindrops mix together to make the colours. A rainbow has seven colours in a long arc across the sky. Red sits at the top of the arc, and purple sits at the bottom.",
+            questions:[
+              { q:"How many colours does a rainbow have?", a:"seven" },
+              { q:"What colour sits at the top of the arc?", a:"red" },
+              { q:"What colour sits at the bottom of the arc?", a:"purple" }
+            ]
+          },
+          {
+            title:"The Sleepy Panda",
+            text:"A big panda spends up to twelve hours every day just eating bamboo. Its strong jaw and flat teeth are made for crunching hard plant stems all day long. Even with all that munching, a panda still finds time to nap between meals. Some pandas can sleep for four hours in one long stretch.",
+            questions:[
+              { q:"How many hours a day does a panda spend eating?", a:"twelve" },
+              { q:"What food does a panda spend so much time eating?", a:"bamboo" },
+              { q:"How many hours can a panda nap in one stretch?", a:"four" }
+            ]
+          }
+        ]
+      },
+
+      { type:'spelling', label:'Level 7',   // Spelling Level 4
+        pool:[ "flag", "plan", "frog", "drop", "step", "clip", "swim", "trip", "spot", "drum", "plug", "twin", "flat", "glad", "grab", "plum", "slid", "slip", "stop", "prop", "spin", "snug", "trap", "brag", "crop", "drab", "drip", "flop", "fled", "grip", "grid", "prod", "scab", "skid", "skip", "sled", "slim", "slit", "snip", "spit", "spun", "stem", "trim", "trot", "twig", "clam", "club", "blur", "clap", "clog", "drag", "gram", "skit", "slot", "slug", "snap", "fret", "scud" ]
+      },
+
+      { type:'reading', label:'Level 8',   // Story Level 4
+        stories:[
+          {
+            title:"The Monster Truck",
+            text:"A monster truck has tyres taller than most grown-ups. These giant tyres let the truck drive right over smaller cars without stopping. Some monster trucks can even launch off a ramp and fly through the air. Crowds cheer loudly every time a truck lands a huge jump.",
+            questions:[
+              { q:"What can a monster truck drive right over?", a:"cars" },
+              { q:"What can a monster truck launch off to fly through the air?", a:"ramp" },
+              { q:"What do crowds do when a truck lands a jump?", a:"cheer" }
+            ]
+          },
+          {
+            title:"The Turtle and the Hare",
+            text:"A rabbit was always boasting about how fast he could run. He made fun of a slow turtle. The turtle got tired of it. He challenged the rabbit to a race. The rabbit laughed but agreed. When the race began, the rabbit shot far ahead. He was so sure he would win. He decided to lie down for a nap halfway through. Meanwhile, the turtle kept moving forward. He was slow but steady, and he never stopped. When the rabbit woke up, he ran to the finish line. It was too late. The turtle had already won.",
+            questions:[
+              { q:"What did the turtle challenge the rabbit to?", a:"race" },
+              { q:"What did the rabbit stop to do halfway through?", a:"nap" },
+              { q:"Who won the race in the end?", a:"turtle" }
+            ]
+          },
+          {
+            title:"The Wind and the Sun",
+            text:"The strong wind and the warm sun had an argument about who was more powerful. They saw a traveller walking down the road wearing a heavy winter cloak. \"Let us see who can make that man take off his cloak first,\" said the wind. The wind blew as hard as he could, but the traveller only pulled his cloak tighter around himself. Then, the sun shone brightly and filled the sky with gentle warmth. The man grew very hot, smiled, and immediately took off his cloak. Gentleness won over force.",
+            questions:[
+              { q:"The traveller was wearing a heavy winter...?", a:"cloak" },
+              { q:"Who tried first to make the man remove his cloak by blowing?", a:"wind" },
+              { q:"Who finally succeeded in making the man take off his cloak?", a:"sun" }
+            ]
+          },
+          {
+            title:"The Multi-Heart Octopus",
+            text:"A clever octopus lives deep in the sea. It has eight long arms, blue blood, and three separate hearts to pump blood.",
+            questions:[
+              { q:"What colour is octopus blood?", a:"blue" },
+              { q:"How many arms does an octopus have?", a:"eight" },
+              { q:"How many hearts does an octopus have?", a:"three" }
+            ]
+          },
+          {
+            title:"The Pit Stop",
+            text:"A race car can zoom around a track faster than almost any car on the road. During a race, it must stop at a pit crew for fresh tyres and fuel. A skilled pit crew can change all four tyres in just a few seconds. The driver races back onto the track as soon as the pit stop ends.",
+            questions:[
+              { q:"Who does a race car stop with for fresh tyres and fuel?", a:"crew" },
+              { q:"How many tyres does the pit crew change?", a:"four" },
+              { q:"Where does the driver race back onto?", a:"track" }
+            ]
+          },
+          {
+            title:"The Ice Skater",
+            text:"An ice skater can glide across the ice on thin blades. She can spin around and around very fast without falling down. Some skaters can jump high in the air and land on just one foot.",
+            questions:[
+              { q:"What thin things does an ice skater glide on?", a:"blades" },
+              { q:"What can an ice skater do fast, around and around?", a:"spin" }
+            ]
+          },
+          {
+            title:"The Big Air Jump",
+            text:"A BMX rider can launch off a dirt ramp and fly higher than a house. Some riders spin their whole bike around in the air before they land. The best riders can jump over ten metres in one single leap. One wrong landing can send the bike flying without its rider.",
+            questions:[
+              { q:"What can a BMX rider launch off?", a:"ramp" },
+              { q:"How many metres can the best riders jump in one leap?", a:"ten" }
+            ]
+          },
+          {
+            title:"The Fastest Rollercoaster",
+            text:"Some rollercoasters can rocket from a full stop to top speed in just seconds. They zoom down the track faster than cars racing along a motorway. The track can twist upside down into huge loops that flip riders around and around. Some coasters even drop riders straight down from higher than a football pitch is long.",
+            questions:[
+              { q:"What shape do rollercoaster tracks twist into?", a:"loops" },
+              { q:"What are rollercoasters faster than?", a:"cars" }
+            ]
+          },
+          {
+            title:"The Fastest Cat",
+            text:"A cheetah is the fastest land animal on Earth. It can race from a full stop to top speed faster than most cars pulling away. A cheetah can also jump over a wide river in one single bound. Its long tail acts like a rudder, helping it turn sharply while running at top speed.",
+            questions:[
+              { q:"What is the fastest land animal on Earth?", a:"cheetah" },
+              { q:"What can a cheetah jump over in one bound?", a:"river" },
+              { q:"What body part helps a cheetah turn sharply while running?", a:"tail" }
+            ]
+          },
+          {
+            title:"The Giant Sun",
+            text:"The sun is so huge that you could fit one million earths inside of it.",
+            questions:[
+              { q:"What could you fit one million times inside the sun?", a:"earth" }
+            ]
+          },
+          {
+            title:"The Big Yawn",
+            text:"A hippo can open its mouth very wide when it yawns. Some hippo yawns stretch more than four feet across. Hippos yawn to warn other animals to stay away, not because they feel sleepy. It is one of the biggest yawns in the whole animal kingdom.",
+            questions:[
+              { q:"What animal has one of the biggest yawns in the animal kingdom?", a:"hippo" },
+              { q:"How many feet can a hippo's yawn stretch across?", a:"four" },
+              { q:"What do hippos use a big yawn to do to other animals?", a:"warn" }
+            ]
+          }
+        ]
+      },
+
+      { type:'spelling', label:'Level 9',   // Spelling Level 5
+        pool:[ "camp", "lamp", "hand", "sand", "desk", "nest", "tent", "milk", "sink", "pink", "wind", "hunt", "band", "land", "ramp", "bank", "tank", "best", "rest", "vest", "lift", "gift", "melt", "fast", "bump", "dump", "jump", "pump", "bend", "mend", "send", "tend", "dust", "must", "rust", "felt", "belt", "hilt", "fond", "bond", "pond", "hint", "tint", "lint", "limp", "task", "mask", "gasp", "hemp", "pomp", "damp", "hind", "mind", "kind", "glen", "mist", "fist", "wilt" ]
+      },
+
+      { type:'reading', label:'Level 10',   // Story Level 5
+        stories:[
+          {
+            title:"The Three Silly Wishes",
+            text:"A poor woodcutter saved a magical tree. A fairy appeared and granted him three wishes. He went home to tell his wife. He was so hungry from work that he blurted out, \"I wish I had a big sausage!\" Instantly, a giant sausage fell on the table. His wife was very angry. She screamed, \"You wasted a wish! I wish that sausage was stuck to your nose!\" Zap! The sausage stuck fast to the man's face. They had to use their third and final wish just to pull the sausage off his nose.",
+            questions:[
+              { q:"How many wishes did the fairy grant?", a:"three" },
+              { q:"What food did the woodcutter wish for?", a:"sausage" },
+              { q:"Where did the sausage get stuck?", a:"nose" }
+            ]
+          },
+          {
+            title:"The Pancake Who Ran Away",
+            text:"A mother was cooking a big, sweet pancake for her kids. Suddenly, the pancake jumped out of the pan. It rolled out the door and sped down the road like a wheel. \"Stop, pancake!\" shouted the mother. The pancake just laughed. It rolled past a dog, a cow, and a horse. It shouted, \"You can't catch me!\" Finally, it met a clever pig by a deep river. The pig said, \"Sit on my snout so I can carry you across.\" The silly pancake jumped on, and the pig ate it in one big bite.",
+            questions:[
+              { q:"What was the mother cooking?", a:"pancake" },
+              { q:"What animal offered to carry the pancake across the river?", a:"pig" },
+              { q:"What did the pancake sit on to cross the river?", a:"snout" }
+            ]
+          },
+          {
+            title:"The Elves and the Shoemaker",
+            text:"A poor shoemaker went to bed. He had only enough leather left to make one last pair of shoes. When he woke up, he found a pair of beautiful shoes sitting on his desk. The stitches were perfect. He sold them for a high price and bought more leather. The next night, the same magic happened. One evening, he hid behind a curtain to see who was helping him. To his surprise, two tiny, bare-foot elves jumped through the window and began to sew. The shoemaker smiled and made them tiny clothes to say thank you.",
+            questions:[
+              { q:"What material did the shoemaker need to buy more of?", a:"leather" },
+              { q:"How many elves helped the shoemaker?", a:"two" },
+              { q:"What did the shoemaker make for the elves, to say thank you?", a:"clothes" }
+            ]
+          },
+          {
+            title:"The Golden Goose",
+            text:"A kind boy named Ben shared his lunch with his neighbour who owned the farm next door. To thank him, the man gave him a goose with feathers of pure gold. Ben carried the goose to a small inn. The innkeeper's daughter tried to steal a golden feather, but her hand stuck fast to the bird. Her sister tried to pull her away, but she stuck to her sister too. Soon, the baker, the priest, and three local workers were all stuck together in a long line, forced to hop behind Ben and his funny golden bird. Ben walked through the town square, where a sad princess sat who never smiled. When she saw the silly line of people hopping behind the goose, she laughed and laughed. The king was so pleased that he gave Ben a chest full of gold.",
+            questions:[
+              { q:"What was the boy's name?", a:"ben" },
+              { q:"What bird did the old man give Ben?", a:"goose" },
+              { q:"What did the innkeeper's daughter try to steal?", a:"feather" },
+              { q:"What did the King give the boy as a reward?", a:"gold" }
+            ]
+          },
+          {
+            title:"The Golden Touch",
+            text:"King Leo loved gold more than anything else. A cheerful spirit granted him one wish, so Leo wished that everything he touched would turn to gold. He touched a garden rose, and it became hard yellow metal. He tried to eat a piece of fresh bread, but it turned into solid gold and nearly broke his teeth. When his favorite cat jumped into his lap, the poor pet turned into a heavy gold statue. King Leo wept and begged the spirit to take the silly, golden curse away.",
+            questions:[
+              { q:"What was the king's name?", a:"leo" },
+              { q:"What flower did King Leo touch first?", a:"rose" },
+              { q:"What pet turned into a gold statue?", a:"cat" }
+            ]
+          },
+          {
+            title:"The Princess and the Pea",
+            text:"A stormy night brought a soaked young girl to the castle gate. She said she was a real princess. The queen wanted to test this. She placed a tiny green pea on the bed frame, then piled twenty soft mattresses on top of it. The girl slept on the giant bed all night. In the morning, the queen asked how she slept. \"Terribly!\" said the girl. \"There was something hard in my bed, and I am black and blue!\" The queen smiled. She knew only a true princess could feel a tiny pea under so many mattresses.",
+            questions:[
+              { q:"What small vegetable did the queen hide in the bed?", a:"pea" },
+              { q:"How many mattresses were piled on the bed?", a:"twenty" },
+              { q:"How did the girl say she slept?", a:"terribly" }
+            ]
+          },
+          {
+            title:"The Stone Soup",
+            text:"A clever traveller arrived at a village during a hard winter. The villagers were hiding their food and said they had nothing to share. The traveller smiled and placed a large pot of water over a campfire. He dropped a smooth, ordinary stone into the water and announced he was making \"stone soup.\" The curious villagers watched. He tasted it and said, \"It is good, but it needs an onion.\" A villager brought an onion. Another brought carrots, and another brought meat. Soon, they made a delicious feast for everyone out of a simple stone.",
+            questions:[
+              { q:"What did the traveller drop into the pot of water?", a:"stone" },
+              { q:"What vegetable did the traveller ask for first?", a:"onion" },
+              { q:"What season was it in the village?", a:"winter" }
+            ]
+          },
+          {
+            title:"The Little Red Hen",
+            text:"A little red hen lived on a farm with a lazy dog, a lazy cat, and a lazy duck. One day, she found some grains of wheat. \"Who will help me plant this wheat?\" she asked. \"Not I,\" said the dog. \"Not I,\" said the cat. \"Not I,\" said the duck. So the little red hen planted the wheat herself. When the wheat grew tall, she asked, \"Who will help me cut the wheat?\" Again, nobody wanted to help. The little red hen cut the wheat alone. She ground it into flour and baked a fresh loaf of warm bread. The smell drifted through the whole farm. \"Who will help me eat this bread?\" she asked. Suddenly, everyone wanted to help. \"No,\" said the little red hen. \"I planted it, I cut it, and I baked it all by myself. Now I will eat it myself too.\" She shared the bread with her chicks instead.",
+            questions:[
+              { q:"What did the little red hen find at the start?", a:"wheat" },
+              { q:"What did the hen bake with the ground wheat?", a:"bread" },
+              { q:"Who did the hen share the bread with in the end?", a:"chicks" }
+            ]
+          },
+          {
+            title:"Footprints Forever",
+            text:"Astronauts once walked on the moon and left footprints in the dust. They also planted a flag there to mark the visit. The moon has no wind or rain to wash anything away. Because of this, the footprints and flag could last for millions of years.",
+            questions:[
+              { q:"What did astronauts leave behind in the moon dust?", a:"footprints" },
+              { q:"What did astronauts plant on the moon to mark their visit?", a:"flag" },
+              { q:"The footprints and flag could last for millions of what?", a:"years" }
+            ]
+          },
+          {
+            title:"The Heavy Egg",
+            text:"An ostrich is the biggest bird on earth. It lays a giant egg that is as heavy as two dozen normal chicken eggs.",
+            questions:[
+              { q:"What is the biggest bird on earth?", a:"ostrich" },
+              { q:"An ostrich egg is as heavy as two of what?", a:"dozen" }
+            ]
+          },
+          {
+            title:"The Sky Explosion",
+            text:"A firework can blast high into the night sky before it explodes. Inside each one, tiny sparks of coloured fire burst out in every direction. Some fireworks can boom louder than a clap of thunder. People use fireworks to mark special days in the year, like New Years Eve. Fireworks use gunpowder to explode in the sky.",
+            questions:[
+              { q:"What do fireworks do when they get high in the sky?", a:"explode" },
+              { q:"What can a firework boom louder than?", a:"thunder" },
+              { q:"What do fireworks use to explode in the sky?", a:"gunpowder" }
             ]
           }
         ]
@@ -422,6 +909,7 @@
   let totalStars = 0;     // stars earned across all levels this run
   let activeWords = [];   // the words drawn from the pool for the current spelling level
   let activeStory = null; // the story drawn from the pool for the current reading level
+  let questComplete = false; // true once all levels have been finished this session
   const MAX_STARS = LEVELS.length * 3;
 
   // ---------- content helpers ----------
@@ -562,10 +1050,13 @@
     const map = el('levelMap'); map.innerHTML='';
     LEVELS.forEach((lv,i)=>{
       const b=document.createElement('div');
-      b.className='map-block'+(i<levelIndex?' done':'');
+      // when the quest is complete, every block shows gold (as during progress)
+      const done = questComplete || (i<levelIndex);
+      b.className='map-block'+(done?' done':'');
       b.textContent=(i+1);
       map.appendChild(b);
     });
+    el('questDoneMsg').classList.toggle('show', questComplete);
   }
 
   // ---------- progress pips ----------
@@ -703,12 +1194,30 @@
       const hint=document.createElement('p'); hint.className='q-hint';
       hint.innerHTML='Starts with: <b>'+qq.a[0]+'</b>';
 
+      const answer=qq.a.toLowerCase();
+      const len=answer.length;
+
       const row=document.createElement('div'); row.className='answer-row';
+
+      // A row of letter-count tiles (like the spelling slots) with an invisible
+      // text input laid over them, so the iPad's native keyboard still opens but
+      // the child sees blocky tiles that reveal how many letters the word has.
+      const slotsWrap=document.createElement('div'); slotsWrap.className='ans-slots';
+      const tiles=[];
+      for(let i=0;i<len;i++){
+        const t=document.createElement('div'); t.className='ans-slot';
+        slotsWrap.appendChild(t); tiles.push(t);
+      }
       const inp=document.createElement('input');
+      inp.className='ans-hidden-input';
       inp.type='text'; inp.autocomplete='off'; inp.autocapitalize='none';
       inp.setAttribute('autocorrect','off'); inp.spellcheck=false;
-      inp.setAttribute('inputmode','text');
-      inp.placeholder='Type the word';
+      inp.setAttribute('inputmode','text'); inp.maxLength=len;
+      inp.setAttribute('aria-label', 'Type your answer, '+len+' letters');
+      slotsWrap.appendChild(inp);
+      // tapping anywhere on the tiles focuses the hidden input to raise the keyboard
+      slotsWrap.addEventListener('click', ()=>{ inp.focus(); });
+
       const btn=document.createElement('button'); btn.className='btn'; btn.type='button'; btn.textContent='Check';
 
       const note=document.createElement('p'); note.className='q-note';
@@ -716,18 +1225,42 @@
       const tick=document.createElement('div'); tick.className='tick';
       tick.innerHTML='<span class="box">&#10003;</span> Correct!';
 
-      // Keep the input visible above the iPad's on-screen keyboard when it opens.
-      inp.addEventListener('focus', ()=>{ setTimeout(()=>{ try{ inp.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 300); });
+      function renderTiles(){
+        const val=inp.value.toLowerCase().slice(0,len);
+        for(let i=0;i<len;i++){
+          const ch=val[i]||'';
+          tiles[i].textContent=ch;
+          tiles[i].classList.toggle('filled', !!ch);
+          tiles[i].classList.toggle('cursor', i===val.length && document.activeElement===inp);
+        }
+      }
+      // clear any red/green state the moment they start editing again
+      function clearFeedback(){
+        slotsWrap.classList.remove('correct','wrong');
+        note.textContent=''; note.className='q-note';
+      }
+      inp.addEventListener('input', ()=>{ clearFeedback(); renderTiles(); });
+      inp.addEventListener('focus', ()=>{
+        renderTiles();
+        setTimeout(()=>{ try{ slotsWrap.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 300);
+      });
+      inp.addEventListener('blur', renderTiles);
 
       function tryAnswer(){
         const val=inp.value.trim().toLowerCase();
         if(!val) return;
-        if(val===qq.a.toLowerCase()){
-          wrap.classList.add('done');
+        if(val===answer){
+          slotsWrap.classList.remove('wrong');
+          slotsWrap.classList.add('correct');
           note.textContent=''; note.className='q-note';
-          markReadingProgress();
+          setTimeout(()=>{
+            wrap.classList.add('done');
+            markReadingProgress();
+          }, 350);
         } else {
           levelWrong++;
+          slotsWrap.classList.remove('correct');
+          slotsWrap.classList.add('wrong');
           note.textContent='Have another look at the story and try again.';
           note.className='q-note bad';
         }
@@ -735,10 +1268,11 @@
       btn.addEventListener('click', tryAnswer);
       inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); tryAnswer(); }});
 
-      row.appendChild(inp); row.appendChild(btn);
+      row.appendChild(slotsWrap); row.appendChild(btn);
       wrap.appendChild(qt); wrap.appendChild(hint); wrap.appendChild(row);
       wrap.appendChild(note); wrap.appendChild(tick);
       box.appendChild(wrap);
+      renderTiles();
     });
     show('reading');
   }
@@ -773,6 +1307,8 @@
     totalStars += stars;
     levelIndex++;
     if(levelIndex>=LEVELS.length){
+      questComplete = true;
+      renderHome();   // update the home map behind the finish screen
       el('finishTotal').textContent = 'You earned ' + totalStars + ' out of ' + MAX_STARS + ' stars!';
       show('finish');
     } else {
@@ -791,11 +1327,11 @@
 
   // ---------- wiring ----------
   el('startBtn').addEventListener('click', ()=>{
-    levelIndex=0; totalStars=0;
+    levelIndex=0; totalStars=0; questComplete=false;
     startLevel();  // first word speaks inside this tap, which both unlocks and plays audio
   });
   el('nextBtn').addEventListener('click', ()=>{ renderHome(); startLevel(); });
-  el('againBtn').addEventListener('click', ()=>{ levelIndex=0; totalStars=0; renderHome(); show('home'); });
+  el('againBtn').addEventListener('click', ()=>{ levelIndex=0; totalStars=0; questComplete=false; renderHome(); show('home'); });
   el('hearBtn').addEventListener('click', ()=> speak(currentWord()));
   el('clearBtn').addEventListener('click', clearWord);
   el('checkBtn').addEventListener('click', checkWord);
