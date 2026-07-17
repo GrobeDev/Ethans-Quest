@@ -247,6 +247,23 @@
   .total-line{font-family:var(--display); font-size:14px; line-height:1.6; color:var(--gold-dark);
     background:#fff; border:3px solid var(--gold); border-radius:10px; padding:12px 16px;
     box-shadow:0 4px 0 var(--gold-dark);}
+  /* fireworks sit behind the finish content */
+  #finish{position:relative;}
+  .fireworks-canvas{position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;}
+  #finish .center-screen{position:relative; z-index:1;}
+  /* gentle "words to practise" reminder on the finish screen */
+  .practise-panel{display:none; background:var(--panel); border:3px solid var(--gold-dark);
+    border-radius:12px; padding:16px 20px; box-shadow:0 5px 0 var(--gold-dark); max-width:380px;}
+  .practise-panel.show{display:block;}
+  .practise-title{font-family:var(--body); font-weight:800; font-size:16px; color:var(--earth);
+    margin:0 0 12px; text-align:center;}
+  .practise-words{display:flex; flex-wrap:wrap; gap:10px; justify-content:center;}
+  .practise-word{font-family:var(--body); font-weight:800; font-size:22px; color:var(--ink);
+    background:#fff; border:2px solid var(--panel-line); border-radius:8px; padding:8px 14px;
+    text-transform:lowercase; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    box-shadow:0 3px 0 var(--panel-line); touch-action:manipulation;}
+  .practise-word:active{transform:translateY(2px); box-shadow:0 1px 0 var(--panel-line);}
+  .practise-word .speaker-ico{font-size:18px;}
   .error-panel{background:var(--panel); border:3px solid var(--error); border-radius:12px;
     padding:20px 22px; margin:20px 0; box-shadow:0 6px 0 var(--error-dark);}
   .error-panel h2{font-family:var(--display); font-size:16px; color:var(--error-dark); margin:0 0 12px;}
@@ -288,7 +305,7 @@
             <button class="btn stone" id="testVoiceBtn" type="button">Test</button>
           </div>
         </div>
-        <p class="version-tag">V0.02</p>
+        <p class="version-tag">V0.04</p>
       </div>
     </section>
 
@@ -303,6 +320,7 @@
       <div class="tools">
         <button class="btn gold" id="hearBtn"><span class="speaker-ico">&#128266;</span> Hear it again</button>
         <button class="btn gold" id="clearBtn"><span class="speaker-ico">&#10006;</span> Clear</button>
+        <button class="btn stone" id="swapBtn"><span class="speaker-ico">&#128260;</span> New word (2 left)</button>
       </div>
       <div class="slots" id="slots"></div>
       <div class="feedback" id="spFeedback"></div>
@@ -337,11 +355,16 @@
 
     <!-- FINISH -->
     <section id="finish" class="screen">
+      <canvas id="fireworks" class="fireworks-canvas"></canvas>
       <div class="center-screen">
         <div class="stack"><div class="blk"></div><div class="blk"></div><div class="blk"></div><div class="blk"></div></div>
-        <div class="big-msg">Congratulations, you have unlocked your games and other apps.</div>
+        <div class="big-msg">Congratulations, you have unlocked your games and other apps!</div>
         <div class="total-line" id="finishTotal"></div>
-        <button class="btn gold" id="againBtn">Play again</button>
+        <div class="practise-panel" id="practisePanel">
+          <p class="practise-title">Read these words one more time:</p>
+          <div class="practise-words" id="practiseWords"></div>
+        </div>
+        <button class="btn gold" id="againBtn">Menu</button>
       </div>
     </section>
 
@@ -386,7 +409,7 @@
     levels: [
 
       { type:'spelling', label:'Level 1',   // Spelling Level 1
-        pool:[ "cat", "bat", "hat", "map", "sad", "mat", "rat", "cap", "tap", "bag", "rag", "fan", "pan", "gas", "wax", "wag", "tag", "gap", "sap", "bad", "had", "pep", "ram", "yam", "tax", "lad", "dad", "mad", "pad", "tan", "van", "jam", "ham", "bed", "red", "net", "wet", "men", "ten", "leg", "pet", "get", "fed", "peg", "web", "beg", "hem", "jet", "set", "met", "vet", "meg", "gem", "big", "pig", "sit", "win", "dig", "dog", "log", "mop", "fox", "bug", "sun", "cup", "bin", "fin", "lip", "zip", "fit", "hit", "hop", "top", "box", "pot", "mud", "nut", "run", "fun", "gum", "hum", "jug", "tug", "rug", "tub", "rub", "sub", "pup", "bus", "cut", "hut", "job", "cob", "rob", "sob", "nod", "rod", "dot", "hot", "not", "pop", "bit", "kit", "lit", "pit", "wig", "hug", "mug", "got", "lot", "rot" ]
+        pool:[ "cat", "bat", "hat", "map", "sad", "mat", "rat", "cap", "tap", "bag", "rag", "fan", "pan", "gas", "wax", "wag", "tag", "gap", "sap", "bad", "had", "ram", "yam", "tax", "lad", "dad", "mad", "pad", "tan", "van", "jam", "ham", "bed", "red", "net", "wet", "men", "ten", "leg", "pet", "get", "fed", "peg", "web", "beg", "hem", "jet", "set", "met", "vet", "gem", "big", "pig", "sit", "win", "dig", "dog", "log", "mop", "fox", "bug", "sun", "cup", "bin", "fin", "lip", "zip", "fit", "hit", "hop", "top", "box", "pot", "mud", "nut", "run", "fun", "gum", "hum", "jug", "tug", "rug", "tub", "rub", "sub", "pup", "bus", "cut", "hut", "job", "cob", "rob", "sob", "nod", "rod", "dot", "hot", "not", "pop", "bit", "kit", "lit", "pit", "wig", "hug", "mug", "got", "lot", "rot" ]
       },
 
       { type:'reading', label:'Level 2',   // Story Level 1
@@ -481,7 +504,7 @@
       },
 
       { type:'spelling', label:'Level 3',   // Spelling Level 2
-        pool:[ "bell", "hill", "doll", "yell", "fall", "wall", "pass", "kiss", "boss", "mess", "cliff", "puff", "well", "sell", "mill", "pill", "tall", "ball", "miss", "less", "hiss", "muff", "fuzz", "buzz", "call", "gull", "dull", "hull", "mass", "toss", "fuss", "huff", "cuff", "sniff", "bluff", "jazz", "fizz", "rill", "will", "fill", "kill", "toll", "roll", "scoff", "tiff", "lull", "bull", "moss", "loss", "lass", "sill", "till", "whizz", "cell", "dell", "hell" ]
+        pool:[ "bell", "hill", "doll", "yell", "fall", "wall", "pass", "kiss", "boss", "mess", "cliff", "puff", "well", "sell", "mill", "pill", "tall", "ball", "miss", "less", "hiss", "fuzz", "buzz", "call", "dull", "hull", "mass", "toss", "fuss", "huff", "cuff", "sniff", "bluff", "jazz", "fizz", "will", "fill", "toll", "roll", "scoff", "lull", "bull", "moss", "loss", "lass", "sill", "till", "whizz", "cell", "dell" ]
       },
 
       { type:'reading', label:'Level 4',   // Story Level 2
@@ -576,7 +599,7 @@
       },
 
       { type:'spelling', label:'Level 5',   // Spelling Level 3
-        pool:[ "fish", "ship", "shop", "dish", "chip", "rich", "much", "chop", "thin", "with", "path", "moth", "cash", "rush", "wish", "shut", "chin", "chat", "such", "math", "them", "than", "when", "whip", "dash", "gash", "lash", "mash", "rash", "sash", "whim", "chum", "chug", "shin", "shot", "shun", "shed", "this", "that", "thus", "bath", "whiz", "chap", "thug", "thaw", "chef", "chomp", "chick", "thick", "shack", "shock", "shrub", "shred", "thump", "wham", "whiff", "duck", "sock", "lock", "rock", "kick", "pack", "king", "ring", "sing", "wing", "song", "long", "luck", "back", "sack", "neck", "sick" ]
+        pool:[ "fish", "ship", "shop", "dish", "chip", "rich", "much", "chop", "thin", "with", "path", "moth", "cash", "rush", "wish", "shut", "chin", "chat", "such", "math", "them", "when", "whip", "dash", "gash", "lash", "mash", "rash", "sash", "whim", "chum", "chug", "shin", "shot", "shun", "shed", "this", "that", "bath", "chap", "thug", "thaw", "chef", "chomp", "chick", "thick", "shack", "shock", "shrub", "shred", "thump", "duck", "sock", "lock", "rock", "kick", "pack", "king", "ring", "sing", "wing", "song", "long", "luck", "back", "sack", "neck", "sick" ]
       },
 
       { type:'reading', label:'Level 6',   // Story Level 3
@@ -683,7 +706,7 @@
       },
 
       { type:'spelling', label:'Level 7',   // Spelling Level 4
-        pool:[ "flag", "plan", "frog", "drop", "step", "clip", "swim", "trip", "spot", "drum", "plug", "twin", "flat", "glad", "grab", "plum", "slid", "slip", "stop", "prop", "spin", "snug", "trap", "brag", "crop", "drab", "drip", "flop", "fled", "grip", "grid", "prod", "scab", "skid", "skip", "sled", "slim", "slit", "snip", "spit", "spun", "stem", "trim", "trot", "twig", "clam", "club", "blur", "clap", "clog", "drag", "gram", "skit", "slot", "slug", "snap", "fret", "scud" ]
+        pool:[ "flag", "plan", "frog", "drop", "step", "clip", "swim", "trip", "spot", "drum", "plug", "twin", "flat", "glad", "grab", "plum", "slid", "slip", "stop", "prop", "spin", "snug", "trap", "brag", "crop", "drab", "drip", "flop", "fled", "grip", "grid", "prod", "scab", "skid", "skip", "sled", "slim", "slit", "snip", "spit", "spun", "stem", "trim", "trot", "twig", "clam", "club", "blur", "clap", "clog", "drag", "gram", "skit", "slot", "slug", "snap", "fret", "toast", "flow" ]
       },
 
       { type:'reading', label:'Level 8',   // Story Level 4
@@ -786,7 +809,7 @@
       },
 
       { type:'spelling', label:'Level 9',   // Spelling Level 5
-        pool:[ "camp", "lamp", "hand", "sand", "desk", "nest", "tent", "milk", "sink", "pink", "wind", "hunt", "band", "land", "ramp", "bank", "tank", "best", "rest", "vest", "lift", "gift", "melt", "fast", "bump", "dump", "jump", "pump", "bend", "mend", "send", "tend", "dust", "must", "rust", "felt", "belt", "hilt", "fond", "bond", "pond", "hint", "tint", "lint", "limp", "task", "mask", "gasp", "hemp", "pomp", "damp", "hind", "mind", "kind", "glen", "mist", "fist", "wilt" ]
+        pool:[ "camp", "lamp", "hand", "sand", "desk", "nest", "tent", "milk", "sink", "pink", "wind", "hunt", "band", "land", "ramp", "bank", "tank", "best", "rest", "vest", "lift", "gift", "melt", "fast", "bump", "dump", "jump", "pump", "bend", "mend", "send", "tend", "dust", "must", "rust", "felt", "belt", "hilt", "fond", "bond", "pond", "hint", "tint", "lint", "limp", "task", "mask", "gasp", "hemp", "pomp", "damp", "hind", "mind", "kind", "goal", "mist", "fist", "wilt" ]
       },
 
       { type:'reading', label:'Level 10',   // Story Level 5
@@ -910,7 +933,13 @@
   let activeWords = [];   // the words drawn from the pool for the current spelling level
   let activeStory = null; // the story drawn from the pool for the current reading level
   let questComplete = false; // true once all levels have been finished this session
+  let runInProgress = false; // a run has been started but not yet completed (drives Start/Continue)
+  let rerollsLeft = 0;    // "New word" swaps left for the current spelling word (2 per word)
+  let wordWrong = 0;      // wrong attempts on the current spelling word
+  let shownWords = [];     // words already shown this spelling level (so swaps never repeat)
+  let hardWords = [];     // spelling words that needed a retry — shown at the end to read again
   const MAX_STARS = LEVELS.length * 3;
+  const REDUCE_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   // ---------- content helpers ----------
   function sample(arr, n){
@@ -1038,12 +1067,67 @@
       document.getElementById(s).classList.toggle('active', s===id);
     });
     window.scrollTo(0,0);
+    if(id==='finish') startFireworks(); else stopFireworks();
   }
   function el(id){ return document.getElementById(id); }
   function renderErrors(list){
     const ul=el('errorList'); ul.innerHTML='';
     list.forEach(msg=>{ const li=document.createElement('li'); li.textContent=msg; ul.appendChild(li); });
   }
+
+  // ---------- fireworks (finish screen background) ----------
+  let fwRAF=null, fwCtx=null, fwCanvas=null, fwParticles=[], fwLast=0, fwSpawn=0;
+  function sizeFwCanvas(){
+    if(!fwCanvas || !fwCtx) return;
+    const r=fwCanvas.getBoundingClientRect();
+    const dpr=Math.min(window.devicePixelRatio||1, 2);
+    fwCanvas.width=Math.max(1, Math.round(r.width*dpr));
+    fwCanvas.height=Math.max(1, Math.round(r.height*dpr));
+    fwCtx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function spawnFirework(){
+    const w=fwCanvas.clientWidth, h=fwCanvas.clientHeight;
+    const cx=w*(0.2+Math.random()*0.6), cy=h*(0.15+Math.random()*0.4);
+    const hue=Math.floor(Math.random()*360);
+    const n=22+Math.floor(Math.random()*16);
+    for(let i=0;i<n;i++){
+      const a=(Math.PI*2*i)/n + Math.random()*0.25;
+      const sp=1.3+Math.random()*2.2;
+      fwParticles.push({x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:1, hue:hue});
+    }
+  }
+  function fwFrame(t){
+    if(!fwCtx){ fwRAF=null; return; }
+    const dt=fwLast?Math.min((t-fwLast)/16.7, 3):1; fwLast=t;
+    const w=fwCanvas.clientWidth, h=fwCanvas.clientHeight;
+    fwCtx.clearRect(0,0,w,h);
+    fwSpawn-=dt;
+    if(fwSpawn<=0){ spawnFirework(); fwSpawn=42+Math.random()*40; }
+    for(let i=fwParticles.length-1;i>=0;i--){
+      const p=fwParticles[i];
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=0.045*dt; p.vx*=0.99; p.life-=0.012*dt;
+      if(p.life<=0){ fwParticles.splice(i,1); continue; }
+      fwCtx.globalAlpha=Math.max(0, p.life);
+      fwCtx.fillStyle='hsl('+p.hue+',90%,60%)';
+      fwCtx.fillRect(Math.round(p.x), Math.round(p.y), 4, 4);   // blocky pixel spark
+    }
+    fwCtx.globalAlpha=1;
+    fwRAF=requestAnimationFrame(fwFrame);
+  }
+  function startFireworks(){
+    if(REDUCE_MOTION) return;
+    fwCanvas=el('fireworks'); if(!fwCanvas) return;
+    fwCtx=fwCanvas.getContext('2d'); if(!fwCtx) return;
+    fwParticles=[]; fwLast=0; fwSpawn=0;
+    sizeFwCanvas();
+    if(!fwRAF) fwRAF=requestAnimationFrame(fwFrame);
+  }
+  function stopFireworks(){
+    if(fwRAF){ cancelAnimationFrame(fwRAF); fwRAF=null; }
+    if(fwCtx && fwCanvas){ fwCtx.clearRect(0,0,fwCanvas.clientWidth, fwCanvas.clientHeight); }
+    fwParticles=[];
+  }
+  window.addEventListener('resize', ()=>{ if(fwRAF) sizeFwCanvas(); });
 
   // ---------- home ----------
   function renderHome(){
@@ -1057,6 +1141,10 @@
       map.appendChild(b);
     });
     el('questDoneMsg').classList.toggle('show', questComplete);
+    // Start when fresh, Continue mid-run, hidden once the quest is complete for the day.
+    const sb=el('startBtn');
+    if(questComplete){ sb.style.display='none'; }
+    else { sb.style.display=''; sb.textContent = runInProgress ? 'Continue' : 'Start'; }
   }
 
   // ---------- progress pips ----------
@@ -1095,21 +1183,43 @@
 
   function startSpellingLevel(){
     activeWords = sample(LEVELS[levelIndex].pool, drawCount(LEVELS[levelIndex]));
+    shownWords = activeWords.slice();   // reserve the level's words so swaps draw fresh ones
     wordIndex=0;
     levelWrong=0;
     el('spLevelBadge').textContent=LEVELS[levelIndex].label;
     show('spelling');
-    loadWord(true);
+    loadWord(true, true);
   }
 
-  function loadWord(auto){
+  function loadWord(auto, isNew){
+    if(isNew===undefined) isNew=true;
     entered=[];
+    if(isNew){ wordWrong=0; rerollsLeft=2; }   // 2 "New word" swaps per word
     const word=currentWord();
     el('spFeedback').textContent=''; el('spFeedback').className='feedback';
     renderPips('spPips', activeWords.length, wordIndex);
     renderSlots(false,false);
     updateCheck();
+    updateSwapBtn();
     if(auto) speak(word);  // auto-say (kept in the tap chain for the first word so iOS allows it)
+  }
+
+  function updateSwapBtn(){
+    const b=el('swapBtn'); if(!b) return;
+    b.disabled = rerollsLeft<=0;
+    b.innerHTML='<span class="speaker-ico">&#128260;</span> New word ('+rerollsLeft+' left)';
+  }
+
+  function swapWord(){
+    if(locked || rerollsLeft<=0) return;
+    const pool=LEVELS[levelIndex].pool;
+    const candidates=pool.filter(w=>shownWords.indexOf(w)===-1);
+    if(!candidates.length){ rerollsLeft=0; updateSwapBtn(); return; }
+    const nw=candidates[Math.floor(Math.random()*candidates.length)];
+    activeWords[wordIndex]=nw;
+    shownWords.push(nw);
+    rerollsLeft--;
+    loadWord(true, false);   // reload + speak the new word, but keep the (now reduced) budget
   }
 
   function renderSlots(correct,wrong){
@@ -1156,6 +1266,7 @@
     const word=currentWord();
     if(entered.length!==word.length) return;
     if(entered.join('')===word){
+      if(wordWrong>0 && hardWords.indexOf(word)===-1) hardWords.push(word);
       locked=true;
       renderSlots(true,false);
       const fb=el('spFeedback'); fb.textContent='Nice! Well spelled.'; fb.className='feedback good';
@@ -1169,7 +1280,7 @@
         }
       }, 900);
     } else {
-      levelWrong++;
+      levelWrong++; wordWrong++;
       renderSlots(false,true);
       const fb=el('spFeedback'); fb.textContent='Not quite \u2014 tap Clear and try again.'; fb.className='feedback bad';
       setTimeout(()=>{ renderSlots(false,false); }, 500);
@@ -1196,6 +1307,7 @@
 
       const answer=qq.a.toLowerCase();
       const len=answer.length;
+      let qWrong=false;   // did this question get a wrong attempt before being solved?
 
       const row=document.createElement('div'); row.className='answer-row';
 
@@ -1250,6 +1362,7 @@
         const val=inp.value.trim().toLowerCase();
         if(!val) return;
         if(val===answer){
+          if(qWrong && hardWords.indexOf(answer)===-1) hardWords.push(answer);
           slotsWrap.classList.remove('wrong');
           slotsWrap.classList.add('correct');
           note.textContent=''; note.className='q-note';
@@ -1258,7 +1371,7 @@
             markReadingProgress();
           }, 350);
         } else {
-          levelWrong++;
+          levelWrong++; qWrong=true;
           slotsWrap.classList.remove('correct');
           slotsWrap.classList.add('wrong');
           note.textContent='Have another look at the story and try again.';
@@ -1310,12 +1423,29 @@
       questComplete = true;
       renderHome();   // update the home map behind the finish screen
       el('finishTotal').textContent = 'You earned ' + totalStars + ' out of ' + MAX_STARS + ' stars!';
+      renderPractise();
       show('finish');
     } else {
       el('levelDoneMsg').textContent = 'Level ' + (justFinished+1) + ' complete!';
       renderStars('levelDoneStars', stars);
       show('levelDone');
     }
+  }
+
+  // gentle end-of-quest reminder: spelling words + story answers that needed a retry.
+  // Each is tappable to hear it read aloud again.
+  function renderPractise(){
+    const panel=el('practisePanel'), box=el('practiseWords');
+    box.innerHTML='';
+    if(!hardWords.length){ panel.classList.remove('show'); return; }
+    hardWords.forEach(w=>{
+      const b=document.createElement('button');
+      b.className='practise-word'; b.type='button';
+      b.innerHTML='<span class="speaker-ico">&#128266;</span> '+w;
+      b.addEventListener('click', ()=>speak(w));
+      box.appendChild(b);
+    });
+    panel.classList.add('show');
   }
 
   function startLevel(){
@@ -1327,13 +1457,18 @@
 
   // ---------- wiring ----------
   el('startBtn').addEventListener('click', ()=>{
-    levelIndex=0; totalStars=0; questComplete=false;
-    startLevel();  // first word speaks inside this tap, which both unlocks and plays audio
+    if(!runInProgress){
+      // fresh run for the day
+      levelIndex=0; totalStars=0; questComplete=false; hardWords=[]; runInProgress=true;
+    }
+    startLevel();  // fresh run, or resume the current level (first word speaks inside this tap)
   });
   el('nextBtn').addEventListener('click', ()=>{ renderHome(); startLevel(); });
-  el('againBtn').addEventListener('click', ()=>{ levelIndex=0; totalStars=0; questComplete=false; renderHome(); show('home'); });
+  // Menu: return to the home board without wiping progress (shows the day's end state once complete)
+  el('againBtn').addEventListener('click', ()=>{ renderHome(); show('home'); });
   el('hearBtn').addEventListener('click', ()=> speak(currentWord()));
   el('clearBtn').addEventListener('click', clearWord);
+  el('swapBtn').addEventListener('click', swapWord);
   el('checkBtn').addEventListener('click', checkWord);
   el('voiceSelect').addEventListener('change', function(){ chosenVoiceURI = this.value; });
   el('testVoiceBtn').addEventListener('click', function(){ speak('frog'); });
