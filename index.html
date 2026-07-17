@@ -247,6 +247,7 @@
   .total-line{font-family:var(--display); font-size:14px; line-height:1.6; color:var(--gold-dark);
     background:#fff; border:3px solid var(--gold); border-radius:10px; padding:12px 16px;
     box-shadow:0 4px 0 var(--gold-dark);}
+  .time-line{font-family:var(--body); font-size:12px; font-weight:600; color:rgba(51,41,28,.45); margin:0;}
   /* fireworks sit behind the finish content */
   #finish{position:relative;}
   .fireworks-canvas{position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;}
@@ -305,7 +306,7 @@
             <button class="btn stone" id="testVoiceBtn" type="button">Test</button>
           </div>
         </div>
-        <p class="version-tag">V0.04</p>
+        <p class="version-tag">V0.05</p>
       </div>
     </section>
 
@@ -360,6 +361,7 @@
         <div class="stack"><div class="blk"></div><div class="blk"></div><div class="blk"></div><div class="blk"></div></div>
         <div class="big-msg">Congratulations, you have unlocked your games and other apps!</div>
         <div class="total-line" id="finishTotal"></div>
+        <p class="time-line" id="finishTime"></p>
         <div class="practise-panel" id="practisePanel">
           <p class="practise-title">Read these words one more time:</p>
           <div class="practise-words" id="practiseWords"></div>
@@ -934,6 +936,7 @@
   let activeStory = null; // the story drawn from the pool for the current reading level
   let questComplete = false; // true once all levels have been finished this session
   let runInProgress = false; // a run has been started but not yet completed (drives Start/Continue)
+  let runStartTime = null;   // Date.now() when the first level of the current run loaded (grown-up stat, not shown to the child prominently)
   let rerollsLeft = 0;    // "New word" swaps left for the current spelling word (2 per word)
   let wordWrong = 0;      // wrong attempts on the current spelling word
   let shownWords = [];     // words already shown this spelling level (so swaps never repeat)
@@ -1406,6 +1409,11 @@
     if(wrong<=items) return 2;
     return 1;
   }
+  function formatDuration(ms){
+    const totalSec=Math.round(ms/1000);
+    const min=Math.floor(totalSec/60), sec=totalSec%60;
+    return 'Completed in '+min+' min '+sec+' sec';
+  }
   function renderStars(containerId, count){
     let s='';
     for(let i=0;i<3;i++){ s += (i<count) ? '\u2B50' : '\u2606'; }  // filled star vs outline
@@ -1423,6 +1431,7 @@
       questComplete = true;
       renderHome();   // update the home map behind the finish screen
       el('finishTotal').textContent = 'You earned ' + totalStars + ' out of ' + MAX_STARS + ' stars!';
+      el('finishTime').textContent = runStartTime ? formatDuration(Date.now()-runStartTime) : '';
       renderPractise();
       show('finish');
     } else {
@@ -1460,6 +1469,7 @@
     if(!runInProgress){
       // fresh run for the day
       levelIndex=0; totalStars=0; questComplete=false; hardWords=[]; runInProgress=true;
+      runStartTime=Date.now();
     }
     startLevel();  // fresh run, or resume the current level (first word speaks inside this tap)
   });
